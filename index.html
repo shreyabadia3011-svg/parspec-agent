@@ -1,0 +1,2832 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Parspec Construction Procurement Agent</title>
+<style>
+:root {
+  --bg: #f5f6f8;
+  --surface: #ffffff;
+  --border: #e2e5ea;
+  --border-light: #f0f2f5;
+  --text-primary: #1a1f2e;
+  --text-secondary: #5a6478;
+  --text-muted: #9aa0ae;
+  --accent: #1b4332;
+  --accent-light: #e8f5e9;
+  --accent-mid: #2d6a4f;
+  --amber: #d97706;
+  --amber-light: #fef3c7;
+  --red: #dc2626;
+  --red-light: #fef2f2;
+  --blue: #2563eb;
+  --blue-light: #eff6ff;
+  --green: #16a34a;
+  --green-light: #f0fdf4;
+  --purple: #7c3aed;
+  --purple-light: #f5f3ff;
+  --radius: 10px;
+  --radius-sm: 6px;
+  --shadow: 0 1px 4px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.04);
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--bg);
+  color: var(--text-primary);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* ── HEADER ── */
+.header {
+  background: var(--accent);
+  color: white;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 56px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.header-left { display: flex; align-items: center; gap: 12px; }
+.header-icon {
+  width: 34px; height: 34px;
+  background: rgba(255,255,255,0.15);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+}
+.header-title { font-size: 15px; font-weight: 600; letter-spacing: -0.2px; }
+.header-sub { font-size: 10px; opacity: 0.6; letter-spacing: 1px; text-transform: uppercase; margin-top: 1px; }
+.header-badge {
+  font-size: 11px;
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.2);
+  padding: 4px 10px;
+  border-radius: 20px;
+  letter-spacing: 0.3px;
+}
+
+/* ── TABS ── */
+.tabs-bar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px;
+  display: flex;
+  gap: 4px;
+}
+.tab-btn {
+  padding: 13px 16px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.tab-btn:hover { color: var(--accent); }
+.tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+.tab-count {
+  background: var(--accent-light);
+  color: var(--accent);
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 10px;
+}
+
+/* ── MAIN LAYOUT ── */
+.main { padding: 20px 24px; max-width: 1400px; margin: 0 auto; }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* ── CONFIG CARD ── */
+.config-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+.config-field { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 200px; }
+.config-field label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-muted); }
+.config-field input {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  font-size: 13px;
+  font-family: 'SF Mono', monospace;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.config-field input:focus { border-color: var(--accent); }
+.server-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 2px var(--green-light); }
+.dot.offline { background: #94a3b8; box-shadow: none; }
+
+/* ── PIPELINE VIZ ── */
+.pipeline {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 16px;
+}
+.pipeline-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 16px; }
+.pipeline-steps {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  overflow-x: auto;
+}
+.pipeline-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 20px;
+  flex: 1;
+  min-width: 150px;
+  cursor: default;
+}
+.step-icon {
+  width: 44px; height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  background: var(--border-light);
+  transition: all 0.3s;
+  position: relative;
+}
+.step-icon.active { background: var(--accent-light); box-shadow: 0 0 0 3px var(--accent-light); }
+.step-icon.done { background: var(--green-light); }
+.step-icon .spinner {
+  position: absolute;
+  inset: -3px;
+  border: 2px solid transparent;
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.step-label { font-size: 11px; font-weight: 600; color: var(--text-secondary); text-align: center; }
+.step-sub { font-size: 10px; color: var(--text-muted); text-align: center; }
+.step-arrow { color: var(--border); font-size: 18px; flex-shrink: 0; }
+
+/* ── GRID ── */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 900px) { .grid-2 { grid-template-columns: 1fr; } }
+
+/* ── SPEC INPUT CARD ── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.card-header {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border-light);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.card-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-secondary); }
+.card-body { padding: 16px 18px; }
+
+.samples { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.sample-chip {
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1.5px solid;
+  transition: all 0.15s;
+}
+.chip-elec { color: var(--blue); border-color: #bfdbfe; background: var(--blue-light); }
+.chip-elec:hover { background: #dbeafe; }
+.chip-plumb { color: #0891b2; border-color: #a5f3fc; background: #f0fdfe; }
+.chip-plumb:hover { background: #e0f7fa; }
+.chip-hvac { color: var(--amber); border-color: #fde68a; background: var(--amber-light); }
+.chip-hvac:hover { background: #fef3c7; }
+.chip-full { color: var(--purple); border-color: #ddd6fe; background: var(--purple-light); }
+.chip-full:hover { background: #ede9fe; }
+
+textarea {
+  width: 100%;
+  height: 240px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  font-size: 12.5px;
+  line-height: 1.6;
+  resize: vertical;
+  outline: none;
+  font-family: 'SF Mono', monospace;
+  color: var(--text-primary);
+  transition: border-color 0.15s;
+}
+textarea:focus { border-color: var(--accent); }
+
+.btn-row { display: flex; gap: 8px; margin-top: 12px; }
+.btn-primary {
+  background: var(--accent);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: background 0.15s;
+}
+.btn-primary:hover { background: var(--accent-mid); }
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-secondary {
+  background: white;
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  padding: 10px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btn-secondary:hover { background: var(--bg); border-color: var(--accent); color: var(--accent); }
+
+/* ── AGENT PROGRESS ── */
+.progress-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  height: 100%;
+}
+.progress-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 240px;
+  color: var(--text-muted);
+  gap: 10px;
+}
+.progress-empty .icon { font-size: 36px; opacity: 0.3; }
+
+.trace-step {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border-light);
+  opacity: 0;
+  transform: translateY(4px);
+  animation: fadeUp 0.3s ease forwards;
+}
+@keyframes fadeUp {
+  to { opacity: 1; transform: translateY(0); }
+}
+.trace-header { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.trace-num {
+  width: 20px; height: 20px;
+  background: var(--accent);
+  color: white;
+  border-radius: 50%;
+  font-size: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.trace-tool { font-size: 12px; font-weight: 700; color: var(--accent); font-family: monospace; }
+.trace-badge {
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-weight: 600;
+  margin-left: auto;
+}
+.badge-running { background: var(--amber-light); color: var(--amber); }
+.badge-done { background: var(--green-light); color: var(--green); }
+.trace-thought { font-size: 12px; color: var(--text-secondary); font-style: italic; margin-bottom: 8px; line-height: 1.5; }
+.trace-decision { font-size: 12px; color: var(--text-primary); background: var(--bg); border-radius: var(--radius-sm); padding: 8px 10px; line-height: 1.5; }
+
+/* ── RESULTS ── */
+.results-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+@media (max-width: 800px) { .results-grid { grid-template-columns: repeat(2, 1fr); } }
+
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+.stat-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-muted); margin-bottom: 6px; }
+.stat-value { font-size: 26px; font-weight: 700; color: var(--text-primary); letter-spacing: -1px; }
+.stat-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+.stat-card.green .stat-value { color: var(--green); }
+.stat-card.amber .stat-value { color: var(--amber); }
+.stat-card.blue .stat-value { color: var(--blue); }
+
+/* ── QUOTE TABLE ── */
+.quote-section { margin-bottom: 24px; }
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-secondary);
+}
+.cat-badge {
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-weight: 600;
+  margin-left: auto;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+}
+th {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 8px 12px;
+  text-align: left;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+}
+td {
+  background: var(--surface);
+  border: 1px solid var(--border-light);
+  padding: 10px 12px;
+  vertical-align: middle;
+}
+tr:hover td { background: #fafbfc; }
+.conf-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.conf-track {
+  flex: 1;
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+  max-width: 60px;
+}
+.conf-fill {
+  height: 100%;
+  border-radius: 2px;
+}
+.review-flag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  color: var(--amber);
+  background: var(--amber-light);
+  padding: 2px 7px;
+  border-radius: 10px;
+  font-weight: 600;
+}
+.alt-link {
+  font-size: 10px;
+  color: var(--blue);
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+/* ── HITL SECTION ── */
+.hitl-banner {
+  background: #fffbeb;
+  border: 1.5px solid #fde68a;
+  border-radius: var(--radius);
+  padding: 14px 18px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.hitl-icon { font-size: 20px; flex-shrink: 0; }
+.hitl-title { font-size: 13px; font-weight: 700; color: #92400e; margin-bottom: 4px; }
+.hitl-sub { font-size: 12px; color: #a16207; }
+.hitl-items { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.hitl-item {
+  font-size: 11px;
+  background: white;
+  border: 1px solid #fde68a;
+  border-radius: var(--radius-sm);
+  padding: 4px 10px;
+  color: #92400e;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.hitl-item button {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid;
+  cursor: pointer;
+  font-weight: 600;
+}
+.btn-approve { background: var(--green-light); color: var(--green); border-color: #86efac; }
+.btn-reject { background: var(--red-light); color: var(--red); border-color: #fca5a5; }
+
+/* ── FINANCIALS ── */
+.financials {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  max-width: 420px;
+  margin-left: auto;
+}
+.fin-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  font-size: 13px;
+  border-bottom: 1px solid var(--border-light);
+}
+.fin-row:last-child { border: none; }
+.fin-row.total {
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--accent);
+  margin-top: 4px;
+  padding-top: 10px;
+  border-top: 2px solid var(--accent);
+}
+.fin-label { color: var(--text-secondary); }
+.export-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+/* ── AGENT TRACE TAB ── */
+.full-trace { }
+.trace-full-step {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+.trace-full-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 18px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+}
+.trace-step-num {
+  width: 28px; height: 28px;
+  background: var(--accent);
+  color: white;
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.trace-tool-name { font-size: 13px; font-weight: 700; color: var(--accent); font-family: monospace; }
+.trace-full-body { padding: 16px 18px; }
+.trace-section-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+  margin-top: 12px;
+}
+.trace-section-label:first-child { margin-top: 0; }
+.thought-box {
+  background: var(--purple-light);
+  border-left: 3px solid var(--purple);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  padding: 10px 14px;
+  font-size: 12.5px;
+  color: #4c1d95;
+  line-height: 1.6;
+  font-style: italic;
+}
+.decision-box {
+  background: var(--green-light);
+  border-left: 3px solid var(--green);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  padding: 10px 14px;
+  font-size: 12.5px;
+  color: #14532d;
+  line-height: 1.6;
+}
+.result-json {
+  background: #1a1f2e;
+  color: #a8d8a8;
+  font-family: 'SF Mono', monospace;
+  font-size: 11.5px;
+  padding: 14px;
+  border-radius: var(--radius-sm);
+  line-height: 1.8;
+  white-space: pre-wrap;
+  overflow-x: auto;
+}
+
+/* ── CATALOGUE TAB ── */
+.cat-filters { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
+.cat-filter-btn {
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1.5px solid var(--border);
+  background: white;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.cat-filter-btn:hover, .cat-filter-btn.active {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+.cat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+}
+.product-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+  transition: box-shadow 0.15s;
+}
+.product-card:hover { box-shadow: var(--shadow); }
+.product-id { font-size: 10px; font-family: monospace; color: var(--text-muted); margin-bottom: 4px; }
+.product-name { font-size: 13px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; line-height: 1.3; }
+.product-brand { font-size: 11px; color: var(--text-muted); margin-bottom: 8px; }
+.product-price {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--accent);
+}
+.product-unit { font-size: 10px; color: var(--text-muted); }
+.product-specs { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 4px; }
+.spec-tag {
+  font-size: 10px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 2px 6px;
+  color: var(--text-secondary);
+}
+.cat-label {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+  margin-bottom: 8px;
+}
+
+/* ── FEATURES TAB ── */
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+}
+.feature-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+}
+.feature-icon { font-size: 28px; margin-bottom: 10px; }
+.feature-title { font-size: 14px; font-weight: 700; margin-bottom: 6px; }
+.feature-desc { font-size: 12.5px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 10px; }
+.feature-why {
+  font-size: 11px;
+  background: var(--accent-light);
+  color: var(--accent);
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  font-weight: 500;
+  line-height: 1.5;
+}
+.priority-badge {
+  float: right;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+.p1 { background: #fef2f2; color: var(--red); }
+.p2 { background: var(--amber-light); color: var(--amber); }
+.p3 { background: var(--blue-light); color: var(--blue); }
+
+/* ── FEATURE DEMOS ── */
+.feat-nav-btn {
+  padding: 7px 14px;
+  border-radius: 20px;
+  border: 1.5px solid var(--border);
+  background: white;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.feat-nav-btn:hover { border-color: var(--accent); color: var(--accent); }
+.feat-nav-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+
+.feature-demo { display: none; }
+.feature-demo.active { display: block; }
+
+.feat-header {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius) var(--radius) 0 0;
+  padding: 20px;
+  border-bottom: none;
+}
+.feat-icon { font-size: 32px; flex-shrink: 0; }
+.feat-title { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+.feat-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.5; }
+
+.feat-body {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0 0 var(--radius) var(--radius);
+  padding: 20px;
+}
+
+.feat-controls {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+.ctrl-group { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 140px; }
+.ctrl-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-muted); }
+.ctrl-select, .ctrl-input {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  font-size: 13px;
+  outline: none;
+  background: white;
+  transition: border-color 0.15s;
+}
+.ctrl-select:focus, .ctrl-input:focus { border-color: var(--accent); }
+
+/* Result displays */
+.sub-card {
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin-bottom: 10px;
+  transition: border-color 0.15s;
+}
+.sub-card:hover { border-color: var(--accent); }
+.sub-card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: var(--bg);
+}
+.sub-rank {
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.sub-body { padding: 12px 16px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.sub-metric { }
+.sub-metric-label { font-size: 10px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+.sub-metric-value { font-size: 15px; font-weight: 700; margin-top: 2px; }
+
+.win-gauge {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 24px;
+  background: var(--bg);
+  border-radius: var(--radius);
+  margin-bottom: 16px;
+}
+.gauge-circle {
+  width: 100px; height: 100px;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 6px solid;
+}
+.gauge-number { font-size: 28px; font-weight: 800; line-height: 1; }
+.gauge-label { font-size: 10px; font-weight: 600; opacity: 0.7; }
+
+.signal-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border-light);
+}
+.signal-label { font-size: 12px; color: var(--text-secondary); flex: 1; }
+.signal-bar-track {
+  width: 120px; height: 6px;
+  background: var(--border);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.signal-bar-fill { height: 100%; border-radius: 3px; }
+.signal-score { font-size: 12px; font-weight: 700; width: 36px; text-align: right; }
+
+.trend-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 800px) { .trend-grid { grid-template-columns: 1fr; } }
+.trend-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.trend-table th { background: var(--bg); padding: 8px 12px; text-align: left; font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); border-bottom: 1px solid var(--border); }
+.trend-table td { padding: 10px 12px; border-bottom: 1px solid var(--border-light); }
+.vol-bar { height: 6px; background: var(--accent); border-radius: 3px; display: inline-block; }
+
+.batch-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr 1fr 80px;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-light);
+  font-size: 12.5px;
+}
+.batch-row:hover { background: #fafbfc; }
+.batch-header { background: var(--bg); font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); border-radius: var(--radius-sm) var(--radius-sm) 0 0; }
+
+.adj-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--border-light);
+  font-size: 12.5px;
+}
+.adj-val { font-weight: 700; font-size: 13px; }
+.adj-val.pos { color: var(--green); }
+.adj-val.neg { color: var(--red); }
+
+.comp-flag {
+  background: #fef3c7;
+  border: 1.5px solid #fde68a;
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  margin-bottom: 10px;
+}
+.comp-flag-title { font-weight: 700; font-size: 13px; color: #92400e; margin-bottom: 4px; }
+.comp-pass {
+  background: var(--green-light);
+  border: 1px solid #86efac;
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  margin-bottom: 6px;
+  font-size: 12px;
+  color: #14532d;
+}
+
+/* ── EMPTY STATE ── */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-muted);
+}
+.empty-state .big-icon { font-size: 48px; margin-bottom: 12px; opacity: 0.4; }
+.empty-state h3 { font-size: 15px; color: var(--text-secondary); margin-bottom: 6px; }
+.empty-state p { font-size: 12.5px; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-left">
+    <div class="header-icon">🏗️</div>
+    <div>
+      <div class="header-title">Parspec Construction Procurement Agent</div>
+      <div class="header-sub">Claude Agent SDK · Document Intelligence · Quote Generation</div>
+    </div>
+  </div>
+  <div class="header-badge">Built by Shreya Badia</div>
+</div>
+
+<!-- TABS -->
+<div class="tabs-bar">
+  <button class="tab-btn active" onclick="switchTab('process')">⚡ Process Spec</button>
+  <button class="tab-btn" onclick="switchTab('quote')" id="tab-quote">📋 Quote <span class="tab-count" id="quote-count">0</span></button>
+  <button class="tab-btn" onclick="switchTab('trace')" id="tab-trace">🧠 Agent Trace</button>
+  <button class="tab-btn" onclick="switchTab('hitl')" id="tab-hitl">👁️ Review Queue <span class="tab-count" id="hitl-count">0</span></button>
+  <button class="tab-btn" onclick="switchTab('catalogue')">📦 Catalogue (50)</button>
+  <button class="tab-btn" onclick="switchTab('features')">🚀 Live Feature Demos</button>
+  <button class="tab-btn" onclick="switchTab('submittals')">📋 Submittals & O&M</button>
+</div>
+
+<div class="main">
+
+  <!-- ═══════════════════════════════════════════
+       TAB: PROCESS SPEC
+  ═══════════════════════════════════════════ -->
+  <div class="tab-panel active" id="panel-process">
+
+    <!-- Config -->
+    <div class="config-card">
+      <div class="config-field" style="flex:2">
+        <label>Anthropic API Key</label>
+        <input type="password" id="apiKey" placeholder="sk-ant-api03-..." />
+      </div>
+      <div class="config-field" style="flex:0.4; min-width:100px">
+        <label>Markup %</label>
+        <input type="number" id="markupPct" value="20" min="0" max="100" />
+      </div>
+      <div class="server-status">
+        <div class="dot" id="serverDot"></div>
+        <div>
+          <div style="font-size:12px; font-weight:600; color:var(--green)" id="serverStatus">Server Running</div>
+          <div style="font-size:10px; color:var(--text-muted)">50 products · v2</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pipeline -->
+    <div class="pipeline">
+      <div class="pipeline-title">How Claude Processes Your Spec</div>
+      <div class="pipeline-steps">
+        <div class="pipeline-step">
+          <div class="step-icon" id="step-icon-1">📄</div>
+          <div class="step-label">Upload</div>
+          <div class="step-sub">PDF or paste text</div>
+        </div>
+        <div class="step-arrow">→</div>
+        <div class="pipeline-step">
+          <div class="step-icon" id="step-icon-2">🔍</div>
+          <div class="step-label">Inspect</div>
+          <div class="step-sub">MEP categories · structure score</div>
+        </div>
+        <div class="step-arrow">→</div>
+        <div class="pipeline-step">
+          <div class="step-icon" id="step-icon-3">⚡</div>
+          <div class="step-label">Extract</div>
+          <div class="step-sub">Requirements · confidence · grounding</div>
+        </div>
+        <div class="step-arrow">→</div>
+        <div class="pipeline-step">
+          <div class="step-icon" id="step-icon-4">🎯</div>
+          <div class="step-label">Match</div>
+          <div class="step-sub">Fuzzy catalogue · ranked alternatives</div>
+        </div>
+        <div class="step-arrow">→</div>
+        <div class="pipeline-step">
+          <div class="step-icon" id="step-icon-5">💰</div>
+          <div class="step-label">Quote</div>
+          <div class="step-sub">Line items · markup · HITL flags</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Input + Progress -->
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Construction Specification</span>
+        </div>
+        <div class="card-body">
+          <div style="margin-bottom:8px; font-size:11px; color:var(--text-muted); font-weight:600; text-transform:uppercase; letter-spacing:0.5px;">Samples</div>
+          <div class="samples">
+            <span class="sample-chip chip-elec" onclick="loadSample('electrical')">⚡ Electrical</span>
+            <span class="sample-chip chip-plumb" onclick="loadSample('plumbing')">💧 Plumbing</span>
+            <span class="sample-chip chip-hvac" onclick="loadSample('hvac')">❄️ HVAC</span>
+            <span class="sample-chip chip-full" onclick="loadSample('full_mep')">🏗️ Full MEP</span>
+          </div>
+          <textarea id="specText" placeholder="Paste construction specification here — electrical, plumbing, HVAC, fire protection, or full MEP spec...
+
+Claude will:
+• Classify MEP categories + score document structure
+• Extract all product requirements with confidence scores
+• Verify each extraction against verbatim source text
+• Fuzzy-match against 50-product MEP catalogue
+• Flag low-confidence items for human review
+• Generate priced quote with markup + tax"></textarea>
+          <div class="btn-row">
+            <button class="btn-primary" id="generateBtn" onclick="generateQuote()">
+              ⚡ Generate Quote
+            </button>
+            <button class="btn-secondary" onclick="document.getElementById('pdfUpload').click()">📄 Upload PDF</button>
+            <input type="file" id="pdfUpload" accept=".pdf,.txt" style="display:none" onchange="handleFileUpload(event)"/>
+            <button class="btn-secondary" onclick="clearAll()">✕ Clear</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Agent Progress -->
+      <div class="progress-card">
+        <div class="card-header">
+          <span class="card-title">Agent Progress</span>
+          <span id="progressStatus" style="font-size:11px; color:var(--text-muted)"></span>
+        </div>
+        <div id="agentProgress">
+          <div class="progress-empty">
+            <div class="icon">🤖</div>
+            <div style="font-size:13px; font-weight:600; color:var(--text-secondary)">Paste a spec and click Generate Quote</div>
+            <div style="font-size:12px;">Claude will process it step by step</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       TAB: QUOTE
+  ═══════════════════════════════════════════ -->
+  <div class="tab-panel" id="panel-quote">
+    <div id="quoteContent">
+      <div class="empty-state">
+        <div class="big-icon">📋</div>
+        <h3>No quote yet</h3>
+        <p>Process a spec to generate a quote</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       TAB: AGENT TRACE
+  ═══════════════════════════════════════════ -->
+  <div class="tab-panel" id="panel-trace">
+    <div id="traceContent">
+      <div class="empty-state">
+        <div class="big-icon">🧠</div>
+        <h3>No trace yet</h3>
+        <p>Process a spec to see Claude's full reasoning trace</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       TAB: HITL REVIEW QUEUE
+  ═══════════════════════════════════════════ -->
+  <div class="tab-panel" id="panel-hitl">
+    <div id="hitlContent">
+      <div class="empty-state">
+        <div class="big-icon">👁️</div>
+        <h3>Review queue empty</h3>
+        <p>Items flagged for human review will appear here</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       TAB: CATALOGUE
+  ═══════════════════════════════════════════ -->
+  <div class="tab-panel" id="panel-catalogue">
+    <div class="cat-filters" id="catFilters">
+      <button class="cat-filter-btn active" onclick="filterCat('all', this)">All (50)</button>
+    </div>
+    <div class="cat-grid" id="catalogueGrid"></div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       TAB: LIVE FEATURE DEMOS
+  ═══════════════════════════════════════════ -->
+  <div class="tab-panel" id="panel-features">
+    <div style="margin-bottom:20px; display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:12px;">
+      <div>
+        <h2 style="font-size:18px; font-weight:700;">Live Feature Demos</h2>
+        <p style="font-size:13px; color:var(--text-secondary); margin-top:4px;">8 working features built for Parspec's construction procurement platform.</p>
+      </div>
+      <div style="display:flex; gap:6px; flex-wrap:wrap;">
+        <span style="font-size:11px; background:#fef2f2; color:#dc2626; padding:4px 10px; border-radius:12px; font-weight:700;">P1 — 3 features</span>
+        <span style="font-size:11px; background:#fef3c7; color:#d97706; padding:4px 10px; border-radius:12px; font-weight:700;">P2 — 4 features</span>
+        <span style="font-size:11px; background:#eff6ff; color:#2563eb; padding:4px 10px; border-radius:12px; font-weight:700;">P3 — 1 feature</span>
+      </div>
+    </div>
+
+    <!-- Feature nav pills -->
+    <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:20px;" id="featureNav">
+      <button class="feat-nav-btn active" onclick="showFeature('substitution', this)">🔄 Substitution Intelligence</button>
+      <button class="feat-nav-btn" onclick="showFeature('winprob', this)">📊 Win Probability</button>
+      <button class="feat-nav-btn" onclick="showFeature('trends', this)">📈 Market Trends</button>
+      <button class="feat-nav-btn" onclick="showFeature('mfr', this)">🤝 Manufacturer Pricing</button>
+      <button class="feat-nav-btn" onclick="showFeature('batch', this)">⚡ Batch Processing</button>
+      <button class="feat-nav-btn" onclick="showFeature('pricing', this)">🏷️ Dynamic Pricing</button>
+      <button class="feat-nav-btn" onclick="showFeature('compliance', this)">🔍 Compliance Checker</button>
+    </div>
+
+    <!-- ── FEATURE 1: SUBSTITUTION INTELLIGENCE ── -->
+    <div class="feature-demo active" id="feat-substitution">
+      <div class="feat-header">
+        <div class="feat-icon">🔄</div>
+        <div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <h3 class="feat-title">Substitution Intelligence</h3>
+            <span style="font-size:10px; background:#fef2f2; color:#dc2626; padding:2px 8px; border-radius:10px; font-weight:700;">P1 — Now</span>
+          </div>
+          <p class="feat-desc">When a product is out of stock or discontinued, AI ranks equivalent substitutes by spec match score, price delta, and historical acceptance rate.</p>
+        </div>
+      </div>
+      <div class="feat-body">
+        <div class="feat-controls">
+          <div class="ctrl-group">
+            <label class="ctrl-label">Select a product (some are out of stock)</label>
+            <select id="sub-product" class="ctrl-select">
+              <option value="E002">E002 — 200A Main Panel (OUT OF STOCK — 8 wks)</option>
+              <option value="P005">P005 — 80 Gal Water Heater Gas (DISCONTINUED)</option>
+              <option value="E010">E010 — ATS 200A (OUT OF STOCK — 6 wks)</option>
+              <option value="H002">H002 — 5 Ton RTU 14 SEER (LOW STOCK)</option>
+            </select>
+          </div>
+          <div class="ctrl-group" style="flex:0; min-width:120px">
+            <label class="ctrl-label">Quantity needed</label>
+            <input type="number" id="sub-qty" value="3" min="1" class="ctrl-input"/>
+          </div>
+          <button class="btn-primary" onclick="runSubstitution()">Find Substitutes</button>
+        </div>
+        <div id="sub-result"></div>
+      </div>
+    </div>
+
+    <!-- ── FEATURE 2: WIN PROBABILITY ── -->
+    <div class="feature-demo" id="feat-winprob">
+      <div class="feat-header">
+        <div class="feat-icon">📊</div>
+        <div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <h3 class="feat-title">Quote Win Probability Score</h3>
+            <span style="font-size:10px; background:#fef2f2; color:#dc2626; padding:2px 8px; border-radius:10px; font-weight:700;">P1 — Now</span>
+          </div>
+          <p class="feat-desc">ML model scores each quote for win likelihood based on markup competitiveness, speed, value, and historical win rates by project type.</p>
+        </div>
+      </div>
+      <div class="feat-body">
+        <div class="feat-controls" style="flex-wrap:wrap;">
+          <div class="ctrl-group">
+            <label class="ctrl-label">Project Type</label>
+            <select id="wp-type" class="ctrl-select">
+              <option>office</option><option>hospital</option><option>school</option>
+              <option>hotel</option><option>retail</option>
+            </select>
+          </div>
+          <div class="ctrl-group">
+            <label class="ctrl-label">Your Markup %</label>
+            <input type="number" id="wp-markup" value="22" min="5" max="40" class="ctrl-input"/>
+          </div>
+          <div class="ctrl-group">
+            <label class="ctrl-label">Quote Value ($)</label>
+            <input type="number" id="wp-value" value="85000" class="ctrl-input"/>
+          </div>
+          <div class="ctrl-group">
+            <label class="ctrl-label">Days to Submit</label>
+            <input type="number" id="wp-days" value="2" min="1" max="10" class="ctrl-input"/>
+          </div>
+          <button class="btn-primary" onclick="runWinProb()">Score Quote</button>
+        </div>
+        <div id="wp-result"></div>
+      </div>
+    </div>
+
+    <!-- ── FEATURE 3: MARKET TRENDS ── -->
+    <div class="feature-demo" id="feat-trends">
+      <div class="feat-header">
+        <div class="feat-icon">📈</div>
+        <div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <h3 class="feat-title">Spec-to-Market Trend Dashboard</h3>
+            <span style="font-size:10px; background:#fef2f2; color:#dc2626; padding:2px 8px; border-radius:10px; font-weight:700;">P1 — Now</span>
+          </div>
+          <p class="feat-desc">Aggregated intelligence across 300+ distributors — top specified products, emerging categories, declining items, monthly volume trends.</p>
+        </div>
+      </div>
+      <div class="feat-body">
+        <div id="trends-result"><button class="btn-primary" onclick="runTrends()">Load Market Intelligence</button></div>
+      </div>
+    </div>
+
+    <!-- ── FEATURE 4: MANUFACTURER PRICING ── -->
+    <div class="feature-demo" id="feat-mfr">
+      <div class="feat-header">
+        <div class="feat-icon">🤝</div>
+        <div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <h3 class="feat-title">Manufacturer Direct Pricing</h3>
+            <span style="font-size:10px; background:#fef3c7; color:#d97706; padding:2px 8px; border-radius:10px; font-weight:700;">P2 — Next</span>
+          </div>
+          <p class="feat-desc">Real-time price and stock data from manufacturer ERPs — Square D, Carrier, Trane, Watts — replacing static catalogue with live data.</p>
+        </div>
+      </div>
+      <div class="feat-body">
+        <div class="feat-controls">
+          <div class="ctrl-group" style="flex:2">
+            <label class="ctrl-label">Select products to check live pricing</label>
+            <select id="mfr-products" multiple class="ctrl-select" style="height:80px;">
+              <option value="E002" selected>E002 — 200A Main Panel (Square D)</option>
+              <option value="H001" selected>H001 — 3 Ton Split AC (Carrier)</option>
+              <option value="H002" selected>H002 — 5 Ton RTU (Trane)</option>
+              <option value="P009">P009 — PRV 3/4in (Watts)</option>
+              <option value="E010">E010 — ATS 200A (Generac)</option>
+            </select>
+          </div>
+          <button class="btn-primary" onclick="runMfrPricing()" style="align-self:flex-end">Pull Live Prices</button>
+        </div>
+        <div id="mfr-result"></div>
+      </div>
+    </div>
+
+    <!-- ── FEATURE 5: BATCH PROCESSING ── -->
+    <div class="feature-demo" id="feat-batch">
+      <div class="feat-header">
+        <div class="feat-icon">⚡</div>
+        <div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <h3 class="feat-title">Multi-Spec Batch Processing</h3>
+            <span style="font-size:10px; background:#fef3c7; color:#d97706; padding:2px 8px; border-radius:10px; font-weight:700;">P2 — Next</span>
+          </div>
+          <p class="feat-desc">Process a morning's inbox of RFQs simultaneously. System auto-triages by estimated value and win probability so estimators know what to prioritize.</p>
+        </div>
+      </div>
+      <div class="feat-body">
+        <div id="batch-result"><button class="btn-primary" onclick="runBatch()">⚡ Process Today's 4 RFQs</button></div>
+      </div>
+    </div>
+
+    <!-- ── FEATURE 6: DYNAMIC PRICING ── -->
+    <div class="feature-demo" id="feat-pricing">
+      <div class="feat-header">
+        <div class="feat-icon">🏷️</div>
+        <div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <h3 class="feat-title">Dynamic Pricing Engine</h3>
+            <span style="font-size:10px; background:#fef3c7; color:#d97706; padding:2px 8px; border-radius:10px; font-weight:700;">P2 — Next</span>
+          </div>
+          <p class="feat-desc">ML markup optimization based on customer tier, project size, urgency, project type, and competitive win rate data. Replaces gut-feel pricing.</p>
+        </div>
+      </div>
+      <div class="feat-body">
+        <div class="feat-controls" style="flex-wrap:wrap;">
+          <div class="ctrl-group">
+            <label class="ctrl-label">Customer Tier</label>
+            <select id="dp-tier" class="ctrl-select">
+              <option value="enterprise">Enterprise</option>
+              <option value="preferred">Preferred</option>
+              <option value="standard" selected>Standard</option>
+              <option value="new">New Customer</option>
+            </select>
+          </div>
+          <div class="ctrl-group">
+            <label class="ctrl-label">Project Type</label>
+            <select id="dp-type" class="ctrl-select">
+              <option>office</option><option>hospital</option><option>school</option>
+              <option>hotel</option><option>data_center</option><option>retail</option>
+            </select>
+          </div>
+          <div class="ctrl-group">
+            <label class="ctrl-label">Quote Value ($)</label>
+            <input type="number" id="dp-value" value="95000" class="ctrl-input"/>
+          </div>
+          <div class="ctrl-group">
+            <label class="ctrl-label">Urgency</label>
+            <select id="dp-urgency" class="ctrl-select">
+              <option value="rush">Rush</option>
+              <option value="normal" selected>Normal</option>
+              <option value="flexible">Flexible</option>
+            </select>
+          </div>
+          <div class="ctrl-group">
+            <label class="ctrl-label">Your Markup %</label>
+            <input type="number" id="dp-markup" value="20" class="ctrl-input"/>
+          </div>
+          <button class="btn-primary" onclick="runDynamicPricing()" style="align-self:flex-end">Optimize Markup</button>
+        </div>
+        <div id="dp-result"></div>
+      </div>
+    </div>
+
+    <!-- ── FEATURE 7: COMPLIANCE ── -->
+    <div class="feature-demo" id="feat-compliance">
+      <div class="feat-header">
+        <div class="feat-icon">🔍</div>
+        <div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <h3 class="feat-title">Spec Compliance Checker</h3>
+            <span style="font-size:10px; background:#eff6ff; color:#2563eb; padding:2px 8px; border-radius:10px; font-weight:700;">P3 — Later</span>
+          </div>
+          <p class="feat-desc">Before generating a quote, AI checks extracted products against NEC, IBC, ASHRAE 90.1, state energy codes, and ADA requirements.</p>
+        </div>
+      </div>
+      <div class="feat-body">
+        <div class="feat-controls">
+          <div class="ctrl-group">
+            <label class="ctrl-label">Project Type</label>
+            <select id="comp-type" class="ctrl-select">
+              <option value="office">Office</option>
+              <option value="school">School</option>
+              <option value="hospital">Hospital</option>
+              <option value="residential">Residential</option>
+            </select>
+          </div>
+          <div class="ctrl-group">
+            <label class="ctrl-label">State</label>
+            <select id="comp-state" class="ctrl-select">
+              <option value="CA">California</option>
+              <option value="TX">Texas</option>
+              <option value="NY">New York</option>
+              <option value="WA">Washington</option>
+              <option value="FL">Florida</option>
+            </select>
+          </div>
+          <button class="btn-primary" onclick="runCompliance()">Check Compliance</button>
+        </div>
+        <p style="font-size:12px; color:var(--text-muted); margin-bottom:12px;">ℹ️ Runs against the last processed spec. Load the Full MEP sample and process it first for best results.</p>
+        <div id="comp-result"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       TAB: SUBMITTALS & O&M
+  ═══════════════════════════════════════════ -->
+  <div class="tab-panel" id="panel-submittals">
+
+    <div style="margin-bottom:20px; display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:12px;">
+      <div>
+        <h2 style="font-size:18px; font-weight:700;">Submittals & O&M — White Space Features</h2>
+        <p style="font-size:13px; color:var(--text-secondary); margin-top:4px;">4 use cases Parspec is not currently solving — built as working demos.</p>
+      </div>
+      <div style="display:flex; gap:6px; flex-wrap:wrap;">
+        <span style="font-size:11px; background:#fef2f2; color:#dc2626; padding:4px 10px; border-radius:12px; font-weight:700;">2 × P1</span>
+        <span style="font-size:11px; background:#fef3c7; color:#d97706; padding:4px 10px; border-radius:12px; font-weight:700;">2 × P2</span>
+      </div>
+    </div>
+
+    <!-- Sub-nav -->
+    <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:20px;">
+      <button class="feat-nav-btn active" onclick="showSubmittal('revision', this)">🔁 Revision Tracker</button>
+      <button class="feat-nav-btn" onclick="showSubmittal('engineer', this)">🎯 Engineer Prediction</button>
+      <button class="feat-nav-btn" onclick="showSubmittal('warranty', this)">📦 O&M Auto-Assembly</button>
+      <button class="feat-nav-btn" onclick="showSubmittal('collab', this)">🤝 Multi-Distributor Collab</button>
+    </div>
+
+    <!-- ── 1. REVISION TRACKER ── -->
+    <div class="feature-demo active" id="sub-revision">
+      <div class="feat-header">
+        <div class="feat-icon">🔁</div>
+        <div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <h3 class="feat-title">Submittal Revision Tracker</h3>
+            <span style="font-size:10px; background:#fef2f2; color:#dc2626; padding:2px 8px; border-radius:10px; font-weight:700;">P1 — White Space</span>
+          </div>
+          <p class="feat-desc">AI diffs Rev 1 vs Rev 2 — shows exactly what the engineer rejected, what was fixed, cost impact, and days lost to revision cycles. Parspec currently has no revision tracking.</p>
+        </div>
+      </div>
+      <div class="feat-body">
+        <div class="feat-controls">
+          <div class="ctrl-group">
+            <label class="ctrl-label">Select Project</label>
+            <select id="rev-project" class="ctrl-select">
+              <option value="ST-2024-001">ST-2024-001 — Downtown Medical Center (Electrical)</option>
+              <option value="ST-2024-002">ST-2024-002 — Airport Terminal Expansion (HVAC)</option>
+            </select>
+          </div>
+          <button class="btn-primary" onclick="runRevisionTracker()">🔁 Compare Revisions</button>
+        </div>
+        <div id="revision-result"></div>
+      </div>
+    </div>
+
+    <!-- ── 2. ENGINEER PREDICTION ── -->
+    <div class="feature-demo" id="sub-engineer">
+      <div class="feat-header">
+        <div class="feat-icon">🎯</div>
+        <div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <h3 class="feat-title">Engineer Approval Prediction</h3>
+            <span style="font-size:10px; background:#fef2f2; color:#dc2626; padding:2px 8px; border-radius:10px; font-weight:700;">P1 — White Space</span>
+          </div>
+          <p class="feat-desc">Before submission, ML model predicts approval probability per item based on engineer firm's historical rejection patterns and brand preferences. Parspec solves creation — not rejection prevention.</p>
+        </div>
+      </div>
+      <div class="feat-body">
+        <div class="feat-controls" style="flex-wrap:wrap;">
+          <div class="ctrl-group">
+            <label class="ctrl-label">Engineer Firm</label>
+            <select id="eng-firm" class="ctrl-select">
+              <option>Jacobs Engineering</option>
+              <option>AECOM</option>
+              <option>Smith &amp; Associates MEP</option>
+            </select>
+          </div>
+          <div class="ctrl-group">
+            <label class="ctrl-label">Project Type</label>
+            <select id="eng-type" class="ctrl-select">
+              <option value="hospital">Hospital</option>
+              <option value="commercial">Commercial</option>
+              <option value="school">School</option>
+            </select>
+          </div>
+          <div class="ctrl-group">
+            <label class="ctrl-label">State</label>
+            <select id="eng-state" class="ctrl-select">
+              <option value="CA">California</option>
+              <option value="TX">Texas</option>
+              <option value="NY">New York</option>
+            </select>
+          </div>
+          <button class="btn-primary" onclick="runEngineerPrediction()">🎯 Predict Approval</button>
+        </div>
+        <div id="engineer-result"></div>
+      </div>
+    </div>
+
+    <!-- ── 3. O&M WARRANTY ASSEMBLY ── -->
+    <div class="feature-demo" id="sub-warranty">
+      <div class="feat-header">
+        <div class="feat-icon">📦</div>
+        <div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <h3 class="feat-title">O&M Warranty & Maintenance Auto-Assembly</h3>
+            <span style="font-size:10px; background:#fef3c7; color:#d97706; padding:2px 8px; border-radius:10px; font-weight:700;">P2 — White Space</span>
+          </div>
+          <p class="feat-desc">At submittal creation time, simultaneously auto-builds the O&M package — warranty terms, maintenance schedules, spare parts lists, certification docs. Today this is assembled manually after project completion, sometimes months later.</p>
+        </div>
+      </div>
+      <div class="feat-body">
+        <div class="feat-controls" style="flex-wrap:wrap;">
+          <div class="ctrl-group" style="flex:2">
+            <label class="ctrl-label">Project Name</label>
+            <input type="text" id="om-project" value="Downtown Medical Center — Phase 1" class="ctrl-input"/>
+          </div>
+          <div class="ctrl-group">
+            <label class="ctrl-label">Building Owner</label>
+            <input type="text" id="om-owner" value="Metro Health Systems LLC" class="ctrl-input"/>
+          </div>
+          <button class="btn-primary" onclick="runWarrantyAssembly()">📦 Build O&M Package</button>
+        </div>
+        <p style="font-size:12px; color:var(--text-muted); margin-bottom:12px;">ℹ️ Runs against the last processed spec's products. Load Full MEP sample first for best results.</p>
+        <div id="warranty-result"></div>
+      </div>
+    </div>
+
+    <!-- ── 4. MULTI-DISTRIBUTOR COLLABORATION ── -->
+    <div class="feature-demo" id="sub-collab">
+      <div class="feat-header">
+        <div class="feat-icon">🤝</div>
+        <div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <h3 class="feat-title">Multi-Distributor Collaboration</h3>
+            <span style="font-size:10px; background:#fef3c7; color:#d97706; padding:2px 8px; border-radius:10px; font-weight:700;">P2 — White Space</span>
+          </div>
+          <p class="feat-desc">Shared project workspace for large projects split across multiple distributors — with AI conflict detection for voltage mismatches, duplicate scope, discontinued products. No platform does this today.</p>
+        </div>
+      </div>
+      <div class="feat-body">
+        <div style="margin-bottom:16px;">
+          <button class="btn-primary" onclick="runCollaboration()">🤝 Load Metro Convention Center Project</button>
+        </div>
+        <div id="collab-result"></div>
+      </div>
+    </div>
+
+  </div>
+
+</div><!-- /main -->
+
+<script>
+// ─── STATE ────────────────────────────────────────────────────────────────
+let lastResult = null;
+let allProducts = [];
+
+// ─── TABS ─────────────────────────────────────────────────────────────────
+function switchTab(name) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  event.target.closest('.tab-btn').classList.add('active');
+  document.getElementById('panel-' + name).classList.add('active');
+}
+
+// ─── SAMPLES ──────────────────────────────────────────────────────────────
+async function loadSample(name) {
+  try {
+    const r = await fetch('/api/sample/' + name);
+    const d = await r.json();
+    document.getElementById('specText').value = d.text;
+  } catch(e) {
+    // fallback
+    document.getElementById('specText').value = 'Sample: ' + name;
+  }
+}
+
+// ─── FILE UPLOAD ──────────────────────────────────────────────────────────
+async function handleFileUpload(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const btn = document.querySelector('button[onclick="document.getElementById(\'pdfUpload\').click()"]');
+  const origText = btn ? btn.textContent : '';
+  if (btn) btn.textContent = '⏳ Reading...';
+
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const r = await fetch('/api/upload-pdf', { method: 'POST', body: formData });
+    const d = await r.json();
+
+    if (!r.ok || d.error) {
+      alert('Upload failed: ' + (d.error || 'Unknown error'));
+      return;
+    }
+
+    document.getElementById('specText').value = d.text;
+    document.getElementById('progressStatus').textContent =
+      `📄 ${file.name} loaded — ${d.pages} page(s), ${d.chars.toLocaleString()} chars`;
+
+  } catch(err) {
+    alert('Upload error: ' + err.message);
+  } finally {
+    if (btn) btn.textContent = origText;
+    e.target.value = '';
+  }
+}
+
+// ─── PIPELINE STEP ANIMATION ──────────────────────────────────────────────
+function setStepState(n, state) {
+  const icon = document.getElementById('step-icon-' + n);
+  if (!icon) return;
+  icon.className = 'step-icon';
+  const old = icon.querySelector('.spinner');
+  if (old) old.remove();
+  if (state === 'active') {
+    icon.classList.add('active');
+    const s = document.createElement('div');
+    s.className = 'spinner';
+    icon.appendChild(s);
+  } else if (state === 'done') {
+    icon.classList.add('done');
+  }
+}
+
+// ─── GENERATE ─────────────────────────────────────────────────────────────
+async function generateQuote() {
+  const specText = document.getElementById('specText').value.trim();
+  const apiKey = document.getElementById('apiKey').value.trim();
+  const markupPct = parseInt(document.getElementById('markupPct').value) || 20;
+
+  if (!specText) { alert('Please paste a construction spec or load a sample first.'); return; }
+
+  const btn = document.getElementById('generateBtn');
+  btn.disabled = true;
+  btn.textContent = '⚙️ Processing...';
+  document.getElementById('progressStatus').textContent = 'Running...';
+
+  // Reset pipeline
+  for (let i = 1; i <= 5; i++) {
+    const icon = document.getElementById('step-icon-' + i);
+    if (icon) { icon.className = 'step-icon'; const s = icon.querySelector('.spinner'); if(s) s.remove(); }
+  }
+
+  // Clear progress
+  document.getElementById('agentProgress').innerHTML = '';
+
+  // Animate steps one by one
+  setStepState(1, 'done');
+  setStepState(2, 'active');
+  addProgressStep({ step: 1, tool: 'inspect_document', thought: 'Classifying MEP categories, scoring document structure, deciding extraction route...', status: 'running' });
+
+  try {
+    const response = await fetch('/api/process', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ spec_text: specText, api_key: apiKey, markup_pct: markupPct })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok || data.error) {
+      showError(data.error || 'Processing failed');
+      btn.disabled = false;
+      btn.innerHTML = '⚡ Generate Quote';
+      return;
+    }
+
+    lastResult = data;
+
+    // Animate through trace
+    for (let i = 0; i < data.trace.length; i++) {
+      const t = data.trace[i];
+      setStepState(i + 1, 'done');
+      if (i + 2 <= 5) setStepState(i + 2, 'active');
+      updateProgressStep(t);
+      await sleep(200);
+    }
+    setStepState(5, 'done');
+
+    document.getElementById('progressStatus').textContent =
+      `✓ Done — ${data.quote?.quality?.total_line_items || 0} items · $${(data.quote?.financials?.grand_total || 0).toLocaleString()}`;
+
+    // Update counts
+    document.getElementById('quote-count').textContent = data.quote?.quality?.total_line_items || 0;
+    document.getElementById('hitl-count').textContent = data.quote?.quality?.items_needing_review || 0;
+
+    renderQuote(data);
+    renderTrace(data);
+    renderHITL(data);
+
+  } catch(e) {
+    showError('Server error: ' + e.message);
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '⚡ Generate Quote';
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ─── PROGRESS STEPS ───────────────────────────────────────────────────────
+function addProgressStep(t) {
+  const div = document.createElement('div');
+  div.className = 'trace-step';
+  div.id = 'ps-' + t.step;
+  div.innerHTML = `
+    <div class="trace-header">
+      <div class="trace-num">${t.step}</div>
+      <div class="trace-tool">${t.tool}()</div>
+      <span class="trace-badge badge-running" id="pb-${t.step}">Running</span>
+    </div>
+    <div class="trace-thought">"${t.thought}"</div>
+    <div id="pd-${t.step}"></div>
+  `;
+  document.getElementById('agentProgress').appendChild(div);
+}
+
+function updateProgressStep(t) {
+  const badge = document.getElementById('pb-' + t.step);
+  const decEl = document.getElementById('pd-' + t.step);
+  if (badge) { badge.className = 'trace-badge badge-done'; badge.textContent = '✓ Done'; }
+  if (decEl && t.decision) {
+    decEl.innerHTML = `<div class="trace-decision">${t.decision}</div>`;
+  }
+}
+
+// ─── RENDER QUOTE ─────────────────────────────────────────────────────────
+function renderQuote(data) {
+  const q = data.quote;
+  if (!q) return;
+  const f = q.financials;
+  const qua = q.quality;
+
+  let html = `
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; flex-wrap:wrap; gap:8px;">
+      <div>
+        <h2 style="font-size:18px; font-weight:700;">${q.quote_id}</h2>
+        <div style="font-size:12px; color:var(--text-muted);">${new Date(q.generated_at).toLocaleString()}</div>
+      </div>
+      <button class="btn-primary" onclick="exportQuotePDF()">⬇ Export Quote PDF</button>
+    </div>
+
+    <div class="results-grid">
+      <div class="stat-card green">
+        <div class="stat-label">Grand Total</div>
+        <div class="stat-value">$${f.grand_total.toLocaleString()}</div>
+        <div class="stat-sub">${f.markup_percent}% markup · 8% tax</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Line Items</div>
+        <div class="stat-value">${qua.total_line_items}</div>
+        <div class="stat-sub">Matched products</div>
+      </div>
+      <div class="stat-card blue">
+        <div class="stat-label">Auto-Approved</div>
+        <div class="stat-value">${qua.auto_approved_pct}%</div>
+        <div class="stat-sub">No review needed</div>
+      </div>
+      <div class="stat-card amber">
+        <div class="stat-label">Review Queue</div>
+        <div class="stat-value">${qua.items_needing_review}</div>
+        <div class="stat-sub">Estimator review needed</div>
+      </div>
+    </div>`;
+
+  // Sections
+  for (const section of q.sections) {
+    const catColor = getCatColor(section.category);
+    html += `
+      <div class="quote-section">
+        <div class="section-header">
+          ${getCatIcon(section.category)} ${section.category}
+          <span class="cat-badge" style="background:${catColor.bg}; color:${catColor.fg};">
+            $${section.category_subtotal.toLocaleString()} · ${section.items.length} items
+          </span>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>Brand</th>
+              <th style="text-align:right">Qty</th>
+              <th>Unit</th>
+              <th style="text-align:right">Unit Price</th>
+              <th style="text-align:right">Line Total</th>
+              <th>Confidence</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>`;
+
+    for (const item of section.items) {
+      const confColor = item.match_confidence >= 0.90 ? '#16a34a' : item.match_confidence >= 0.75 ? '#d97706' : '#dc2626';
+      html += `
+        <tr>
+          <td style="font-weight:500; max-width:220px;">${item.description}</td>
+          <td style="color:var(--text-muted); font-size:11px;">${item.brand}</td>
+          <td style="text-align:right; font-weight:600;">${item.qty.toLocaleString()}</td>
+          <td style="color:var(--text-muted)">${item.unit}</td>
+          <td style="text-align:right;">$${item.unit_price.toFixed(2)}</td>
+          <td style="text-align:right; font-weight:700; color:var(--accent);">$${item.line_total.toLocaleString()}</td>
+          <td>
+            <div class="conf-bar">
+              <div class="conf-track"><div class="conf-fill" style="width:${item.match_confidence*100}%; background:${confColor}"></div></div>
+              <span style="font-size:11px; font-weight:600; color:${confColor}">${Math.round(item.match_confidence*100)}%</span>
+            </div>
+          </td>
+          <td>${item.needs_review
+            ? `<span class="review-flag">⚠ Review</span>`
+            : `<span style="font-size:10px; color:var(--green); font-weight:600;">✓ Auto</span>`}
+          </td>
+        </tr>`;
+    }
+    html += `</tbody></table></div>`;
+  }
+
+  // Financials
+  html += `
+    <div class="financials">
+      <div class="fin-row"><span class="fin-label">Subtotal (materials)</span><span>$${f.subtotal.toLocaleString()}</span></div>
+      <div class="fin-row"><span class="fin-label">Markup (${f.markup_percent}%)</span><span>$${f.markup_amount.toLocaleString()}</span></div>
+      <div class="fin-row"><span class="fin-label">Pre-tax total</span><span>$${f.pre_tax_total.toLocaleString()}</span></div>
+      <div class="fin-row"><span class="fin-label">Tax (${f.tax_rate})</span><span>$${f.tax_amount.toLocaleString()}</span></div>
+      <div class="fin-row total"><span>Grand Total</span><span>$${f.grand_total.toLocaleString()}</span></div>
+    </div>`;
+
+  document.getElementById('quoteContent').innerHTML = html;
+}
+
+// ─── RENDER TRACE ─────────────────────────────────────────────────────────
+function renderTrace(data) {
+  if (!data.trace) return;
+  let html = '';
+  for (const t of data.trace) {
+    html += `
+      <div class="trace-full-step">
+        <div class="trace-full-header">
+          <div class="trace-step-num">${t.step}</div>
+          <div class="trace-tool-name">${t.tool}()</div>
+          <span class="trace-badge badge-done" style="margin-left:auto;">✓ Complete</span>
+        </div>
+        <div class="trace-full-body">
+          <div class="trace-section-label">Claude's Reasoning</div>
+          <div class="thought-box">"${t.thought}"</div>
+          <div class="trace-section-label">Decision</div>
+          <div class="decision-box">${t.decision || '—'}</div>
+          <div class="trace-section-label">Tool Output</div>
+          <div class="result-json">${JSON.stringify(t.result, null, 2)}</div>
+        </div>
+      </div>`;
+  }
+  document.getElementById('traceContent').innerHTML = html || '<div class="empty-state"><p>No trace data</p></div>';
+}
+
+// ─── RENDER HITL ──────────────────────────────────────────────────────────
+function renderHITL(data) {
+  const q = data.quote;
+  if (!q) return;
+  const reviewItems = [];
+  for (const section of q.sections) {
+    for (const item of section.items) {
+      if (item.needs_review) reviewItems.push(item);
+    }
+  }
+
+  if (reviewItems.length === 0) {
+    document.getElementById('hitlContent').innerHTML = `
+      <div class="empty-state">
+        <div class="big-icon">✅</div>
+        <h3>All items auto-approved</h3>
+        <p>No estimator review required for this spec</p>
+      </div>`;
+    return;
+  }
+
+  let html = `
+    <div class="hitl-banner">
+      <div class="hitl-icon">⚠️</div>
+      <div>
+        <div class="hitl-title">${reviewItems.length} items require estimator review before quote can be sent</div>
+        <div class="hitl-sub">These items had extraction confidence &lt;0.90 or catalogue match confidence &lt;0.75. Review each item below.</div>
+      </div>
+    </div>
+    <div style="display:grid; gap:12px;" id="hitlItemsList">`;
+
+  for (let i = 0; i < reviewItems.length; i++) {
+    const item = reviewItems[i];
+    html += `
+      <div class="card" id="hitl-item-${i}">
+        <div class="card-header">
+          <span class="card-title">Item ${i+1}: ${item.description}</span>
+          <span class="review-flag">⚠ Needs Review</span>
+        </div>
+        <div class="card-body" style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+          <div>
+            <div style="font-size:10px; color:var(--text-muted); font-weight:600; text-transform:uppercase; margin-bottom:4px;">AI Match</div>
+            <div style="font-weight:600; font-size:13px;">${item.description}</div>
+            <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">${item.brand} · Qty: ${item.qty} · $${item.unit_price}/ea</div>
+            <div style="margin-top:8px; display:flex; gap:6px;">
+              <div style="font-size:11px; color:var(--text-muted);">Match confidence:</div>
+              <span style="font-size:11px; font-weight:700; color:var(--amber)">${Math.round(item.match_confidence*100)}%</span>
+            </div>
+          </div>
+          <div>
+            <div style="font-size:10px; color:var(--text-muted); font-weight:600; text-transform:uppercase; margin-bottom:6px;">Estimator Action</div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              <button class="btn-primary" style="font-size:11px; padding:6px 12px;" onclick="approveHITL(${i})">✓ Approve Match</button>
+              <button class="btn-secondary" style="font-size:11px; padding:6px 12px;" onclick="rejectHITL(${i})">✗ Reject</button>
+              <button class="btn-secondary" style="font-size:11px; padding:6px 12px;" onclick="overrideHITL(${i})">✏ Override Product</button>
+            </div>
+            <div style="margin-top:8px; font-size:10px; color:var(--text-muted);">Rejection reason:</div>
+            <select style="margin-top:4px; font-size:11px; border:1px solid var(--border); border-radius:4px; padding:4px 8px; width:100%;">
+              <option>Select reason...</option>
+              <option>Wrong product</option>
+              <option>Wrong quantity</option>
+              <option>Not in catalogue</option>
+              <option>OCR extraction error</option>
+              <option>Other</option>
+            </select>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  html += '</div>';
+  document.getElementById('hitlContent').innerHTML = html;
+}
+
+function approveHITL(i) {
+  const el = document.getElementById('hitl-item-' + i);
+  if (el) {
+    el.style.opacity = '0.5';
+    el.querySelector('.review-flag').innerHTML = '<span style="font-size:10px; color:var(--green); font-weight:600; background:var(--green-light); padding:2px 7px; border-radius:10px;">✓ Approved</span>';
+  }
+}
+function rejectHITL(i) {
+  const el = document.getElementById('hitl-item-' + i);
+  if (el) {
+    el.style.opacity = '0.5';
+    el.querySelector('.review-flag').innerHTML = '<span style="font-size:10px; color:var(--red); font-weight:600; background:var(--red-light); padding:2px 7px; border-radius:10px;">✗ Rejected</span>';
+  }
+}
+function overrideHITL(i) {
+  alert('In production: opens catalogue search to select replacement product. Training signal captured.');
+}
+
+// ─── EXPORT QUOTE ─────────────────────────────────────────────────────────
+function exportQuotePDF() {
+  if (!lastResult?.quote) return alert('No quote to export');
+  const q = lastResult.quote;
+  const f = q.financials;
+
+  let content = `CONSTRUCTION MATERIALS QUOTE\n`;
+  content += `${'='.repeat(50)}\n`;
+  content += `Quote ID: ${q.quote_id}\n`;
+  content += `Generated: ${new Date(q.generated_at).toLocaleString()}\n\n`;
+
+  for (const section of q.sections) {
+    content += `\n── ${section.category.toUpperCase()} ──\n`;
+    for (const item of section.items) {
+      content += `  ${item.description.padEnd(45)} ${String(item.qty).padStart(5)} ${item.unit.padEnd(6)} @ $${item.unit_price.toFixed(2).padStart(8)} = $${item.line_total.toLocaleString().padStart(12)}\n`;
+    }
+    content += `  ${'─'.repeat(78)}\n`;
+    content += `  Category Subtotal: $${section.category_subtotal.toLocaleString()}\n`;
+  }
+
+  content += `\n${'='.repeat(50)}\n`;
+  content += `Subtotal:       $${f.subtotal.toLocaleString()}\n`;
+  content += `Markup (${f.markup_percent}%):  $${f.markup_amount.toLocaleString()}\n`;
+  content += `Tax (${f.tax_rate}):       $${f.tax_amount.toLocaleString()}\n`;
+  content += `GRAND TOTAL:    $${f.grand_total.toLocaleString()}\n`;
+
+  const blob = new Blob([content], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${q.quote_id}.txt`;
+  a.click();
+}
+
+// ─── CATALOGUE ────────────────────────────────────────────────────────────
+function getCatColor(cat) {
+  const map = {
+    'Electrical': { bg: '#eff6ff', fg: '#2563eb' },
+    'Plumbing': { bg: '#f0fdfe', fg: '#0891b2' },
+    'HVAC': { bg: '#fef3c7', fg: '#d97706' },
+    'Fire Protection': { bg: '#fef2f2', fg: '#dc2626' },
+    'Low Voltage': { bg: '#f5f3ff', fg: '#7c3aed' },
+    'Lighting': { bg: '#fefce8', fg: '#ca8a04' },
+    'Mechanical': { bg: '#f0fdf4', fg: '#16a34a' },
+  };
+  return map[cat] || { bg: '#f5f5f5', fg: '#666' };
+}
+function getCatIcon(cat) {
+  const map = { 'Electrical':'⚡','Plumbing':'💧','HVAC':'❄️','Fire Protection':'🔥','Low Voltage':'📡','Lighting':'💡','Mechanical':'⚙️' };
+  return map[cat] || '📦';
+}
+
+async function loadCatalogue() {
+  try {
+    const r = await fetch('/api/catalogue');
+    const d = await r.json();
+    allProducts = d.products;
+
+    // Build category filters
+    const filtersEl = document.getElementById('catFilters');
+    filtersEl.innerHTML = `<button class="cat-filter-btn active" onclick="filterCat('all', this)">All (${d.products.length})</button>`;
+    for (const cat of d.categories) {
+      const count = d.products.filter(p => p.category === cat).length;
+      filtersEl.innerHTML += `<button class="cat-filter-btn" onclick="filterCat('${cat}', this)">${getCatIcon(cat)} ${cat} (${count})</button>`;
+    }
+
+    renderCatalogue(allProducts);
+  } catch(e) {}
+}
+
+function filterCat(cat, btn) {
+  document.querySelectorAll('.cat-filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const filtered = cat === 'all' ? allProducts : allProducts.filter(p => p.category === cat);
+  renderCatalogue(filtered);
+}
+
+function renderCatalogue(products) {
+  const grid = document.getElementById('catalogueGrid');
+  grid.innerHTML = products.map(p => {
+    const c = getCatColor(p.category);
+    const specs = Object.entries(p.specs).slice(0, 4).map(([k,v]) => `<span class="spec-tag">${k}: ${v}</span>`).join('');
+    return `
+      <div class="product-card">
+        <div class="product-id">${p.id}</div>
+        <span class="cat-label" style="background:${c.bg}; color:${c.fg};">${getCatIcon(p.category)} ${p.category}</span>
+        <div class="product-name">${p.name}</div>
+        <div class="product-brand">${p.brand}</div>
+        <div>
+          <span class="product-price">$${p.base_price.toFixed(2)}</span>
+          <span class="product-unit"> / ${p.unit}</span>
+        </div>
+        <div class="product-specs">${specs}</div>
+      </div>`;
+  }).join('');
+}
+
+// ─── HELPERS ──────────────────────────────────────────────────────────────
+function showError(msg) {
+  document.getElementById('agentProgress').innerHTML = `
+    <div style="padding:20px; color:var(--red); background:var(--red-light); margin:16px; border-radius:var(--radius-sm); font-size:13px;">
+      ⚠ ${msg}
+    </div>`;
+}
+
+function clearAll() {
+  document.getElementById('specText').value = '';
+  document.getElementById('agentProgress').innerHTML = `
+    <div class="progress-empty">
+      <div class="icon">🤖</div>
+      <div style="font-size:13px; font-weight:600; color:var(--text-secondary)">Paste a spec and click Generate Quote</div>
+    </div>`;
+  for (let i = 1; i <= 5; i++) {
+    const icon = document.getElementById('step-icon-' + i);
+    if (icon) { icon.className = 'step-icon'; const s = icon.querySelector('.spinner'); if(s) s.remove(); }
+  }
+}
+
+// ─── FEATURE NAV ──────────────────────────────────────────────────────────
+function showFeature(name, btn) {
+  document.querySelectorAll('.feat-nav-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.feature-demo').forEach(d => d.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('feat-' + name).classList.add('active');
+}
+
+// ─── FEATURE 1: SUBSTITUTION ──────────────────────────────────────────────
+async function runSubstitution() {
+  const pid = document.getElementById('sub-product').value;
+  const qty = parseInt(document.getElementById('sub-qty').value) || 1;
+  const el = document.getElementById('sub-result');
+  el.innerHTML = '<div style="color:var(--text-muted); font-size:13px; padding:12px 0;">Finding substitutes...</div>';
+
+  const r = await fetch('/api/substitutions', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({product_id: pid, quantity: qty})
+  });
+  const d = await r.json();
+
+  const inv = d.original.inventory;
+  const statusColor = inv.status === 'OUT_OF_STOCK' ? 'var(--red)' : inv.status === 'DISCONTINUED' ? '#7c3aed' : 'var(--amber)';
+  const statusBg = inv.status === 'OUT_OF_STOCK' ? 'var(--red-light)' : inv.status === 'DISCONTINUED' ? 'var(--purple-light)' : 'var(--amber-light)';
+
+  let html = `
+    <div style="background:${statusBg}; border-radius:var(--radius); padding:14px 16px; margin-bottom:16px; display:flex; align-items:center; gap:12px;">
+      <div style="font-size:20px;">⚠️</div>
+      <div>
+        <div style="font-weight:700; color:${statusColor};">${d.original.name} — ${inv.status.replace('_',' ')}</div>
+        <div style="font-size:12px; color:${statusColor}; opacity:0.8;">ETA: ${inv.eta} · Qty needed: ${qty} · Original price: $${d.original.base_price}/ea · Line total: $${d.original_line_total.toLocaleString()}</div>
+      </div>
+    </div>
+    <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; color:var(--text-muted); margin-bottom:10px;">
+      ${d.substitutes.length} Ranked Substitutes (spec match · price delta · acceptance rate)
+    </div>`;
+
+  for (let i = 0; i < d.substitutes.length; i++) {
+    const s = d.substitutes[i];
+    const scoreColor = s.overall_score >= 70 ? 'var(--green)' : s.overall_score >= 50 ? 'var(--amber)' : 'var(--red)';
+    const priceDir = s.price_delta >= 0 ? `+$${s.price_delta.toFixed(2)}` : `-$${Math.abs(s.price_delta).toFixed(2)}`;
+    const priceDirColor = s.price_delta <= 0 ? 'var(--green)' : 'var(--amber)';
+
+    html += `
+      <div class="sub-card">
+        <div class="sub-card-header">
+          <div class="sub-rank">${i+1}</div>
+          <div style="flex:1">
+            <div style="font-weight:700; font-size:13px;">${s.name}</div>
+            <div style="font-size:11px; color:var(--text-muted);">${s.brand} · ${s.availability.replace('_',' ')} · $${s.unit_price}/ea</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:20px; font-weight:800; color:${scoreColor};">${s.overall_score.toFixed(0)}</div>
+            <div style="font-size:10px; color:var(--text-muted);">SCORE</div>
+          </div>
+        </div>
+        <div class="sub-body">
+          <div class="sub-metric">
+            <div class="sub-metric-label">Spec Match</div>
+            <div class="sub-metric-value" style="color:var(--blue)">${s.spec_match_score.toFixed(0)}%</div>
+          </div>
+          <div class="sub-metric">
+            <div class="sub-metric-label">Price Delta</div>
+            <div class="sub-metric-value" style="color:${priceDirColor}">${priceDir}/ea</div>
+          </div>
+          <div class="sub-metric">
+            <div class="sub-metric-label">Acceptance Rate</div>
+            <div class="sub-metric-value" style="color:var(--purple)">${s.acceptance_rate}%</div>
+          </div>
+          <div class="sub-metric">
+            <div class="sub-metric-label">Line Total Impact</div>
+            <div class="sub-metric-value" style="color:${s.line_total_delta <= 0 ? 'var(--green)' : 'var(--amber)'}">
+              ${s.line_total_delta >= 0 ? '+' : ''}$${s.line_total_delta.toLocaleString()}
+            </div>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  if (d.substitutes.length === 0) {
+    html += '<div style="color:var(--text-muted); padding:20px; text-align:center;">No in-stock substitutes found in this category.</div>';
+  }
+
+  el.innerHTML = html;
+}
+
+// ─── FEATURE 2: WIN PROBABILITY ───────────────────────────────────────────
+async function runWinProb() {
+  const el = document.getElementById('wp-result');
+  el.innerHTML = '<div style="color:var(--text-muted); font-size:13px;">Scoring quote...</div>';
+
+  const r = await fetch('/api/win-probability', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({
+      markup: parseFloat(document.getElementById('wp-markup').value),
+      project_type: document.getElementById('wp-type').value,
+      quote_value: parseFloat(document.getElementById('wp-value').value),
+      days_to_quote: parseFloat(document.getElementById('wp-days').value),
+      num_line_items: 20
+    })
+  });
+  const d = await r.json();
+
+  const wp = d.win_probability;
+  const gaugeColor = wp >= 70 ? 'var(--green)' : wp >= 50 ? 'var(--amber)' : 'var(--red)';
+  const recBg = d.recommendation_type === 'looks_good' ? 'var(--green-light)' : 'var(--amber-light)';
+  const recColor = d.recommendation_type === 'looks_good' ? '#14532d' : '#92400e';
+
+  const signals = [
+    {label: 'Markup competitiveness', score: d.signals.markup_score, weight: '35%'},
+    {label: 'Submission speed', score: d.signals.speed_score, weight: '30%'},
+    {label: 'Quote value vs. market', score: d.signals.value_score, weight: '20%'},
+    {label: 'Quote completeness', score: d.signals.completeness_score, weight: '15%'},
+  ];
+
+  const signalRows = signals.map(s => {
+    const c = s.score >= 75 ? 'var(--green)' : s.score >= 50 ? 'var(--amber)' : 'var(--red)';
+    return `<div class="signal-row">
+      <span class="signal-label">${s.label} <span style="font-size:10px; color:var(--text-muted)">(${s.weight})</span></span>
+      <div class="signal-bar-track"><div class="signal-bar-fill" style="width:${s.score}%; background:${c}"></div></div>
+      <span class="signal-score" style="color:${c}">${s.score}</span>
+    </div>`;
+  }).join('');
+
+  el.innerHTML = `
+    <div class="win-gauge">
+      <div class="gauge-circle" style="border-color:${gaugeColor}; color:${gaugeColor}">
+        <div class="gauge-number">${wp}%</div>
+        <div class="gauge-label">WIN PROB</div>
+      </div>
+      <div style="flex:1">
+        <div style="font-size:13px; font-weight:700; margin-bottom:4px;">
+          ${wp >= 70 ? '✅ Strong position' : wp >= 50 ? '⚠️ Moderate chance' : '❌ At risk'}
+          — ${d.project_type} project
+        </div>
+        <div style="font-size:12px; color:var(--text-secondary);">
+          Historical win rate for ${d.project_type}: <strong>${d.benchmark.historical_win_rate}%</strong> ·
+          Avg winning markup: <strong>${d.benchmark.avg_winning_markup}%</strong> ·
+          Sample: ${d.benchmark.sample_size} quotes
+        </div>
+      </div>
+    </div>
+    <div style="background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:16px; margin-bottom:12px;">
+      <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; color:var(--text-muted); margin-bottom:10px;">Signal Breakdown</div>
+      ${signalRows}
+    </div>
+    <div style="background:${recBg}; border-radius:var(--radius); padding:14px 16px; color:${recColor}; font-size:13px; line-height:1.5;">
+      💡 <strong>Recommendation:</strong> ${d.recommendation}
+    </div>`;
+}
+
+// ─── FEATURE 3: MARKET TRENDS ─────────────────────────────────────────────
+async function runTrends() {
+  const el = document.getElementById('trends-result');
+  el.innerHTML = '<div style="color:var(--text-muted); font-size:13px;">Loading market intelligence...</div>';
+
+  const r = await fetch('/api/trends');
+  const d = await r.json();
+
+  const maxSpecs = Math.max(...d.top_products.map(p => p.spec_count));
+  const topRows = d.top_products.map((p,i) => `
+    <tr>
+      <td style="font-weight:600">${i+1}</td>
+      <td>${p.name}</td>
+      <td><span style="font-size:10px; padding:2px 7px; border-radius:8px; background:var(--accent-light); color:var(--accent); font-weight:600;">${p.category}</span></td>
+      <td style="font-weight:700">${p.spec_count.toLocaleString()}</td>
+      <td><span class="vol-bar" style="width:${Math.round(p.spec_count/maxSpecs*80)}px"></span></td>
+      <td style="color:var(--green); font-weight:700">${p.trend}</td>
+    </tr>`).join('');
+
+  const maxVol = Math.max(...d.monthly_volume.map(m => m.specs));
+  const volBars = d.monthly_volume.map(m => `
+    <div style="display:flex; flex-direction:column; align-items:center; gap:4px; flex:1">
+      <div style="font-size:11px; font-weight:600; color:var(--accent)">$${m.value}M</div>
+      <div style="width:100%; background:var(--accent); border-radius:4px 4px 0 0; height:${Math.round(m.specs/maxVol*80)}px; min-height:8px;"></div>
+      <div style="font-size:10px; color:var(--text-muted)">${m.month}</div>
+    </div>`).join('');
+
+  const emergRows = d.emerging.map(e => `
+    <tr>
+      <td style="font-weight:600">${e.name}</td>
+      <td><span style="color:var(--green); font-weight:700">${e.growth}</span></td>
+      <td style="font-size:11px; color:var(--text-secondary)">${e.driver}</td>
+    </tr>`).join('');
+
+  const declRows = d.declining.map(e => `
+    <tr>
+      <td style="font-weight:600">${e.name}</td>
+      <td><span style="color:var(--red); font-weight:700">${e.decline}</span></td>
+      <td style="font-size:11px; color:var(--text-secondary)">${e.reason}</td>
+    </tr>`).join('');
+
+  el.innerHTML = `
+    <div style="display:grid; gap:8px; grid-template-columns:repeat(3,1fr); margin-bottom:16px;">
+      <div class="stat-card"><div class="stat-label">Distributors Tracked</div><div class="stat-value">312</div><div class="stat-sub">Anonymized network</div></div>
+      <div class="stat-card green"><div class="stat-label">Specs Processed (Jun)</div><div class="stat-value">2,950</div><div class="stat-sub">+8% vs May</div></div>
+      <div class="stat-card blue"><div class="stat-label">Pipeline Value (Jun)</div><div class="stat-value">$14.1M</div><div class="stat-sub">Across all distributors</div></div>
+    </div>
+
+    <div style="background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:16px; margin-bottom:16px;">
+      <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; color:var(--text-muted); margin-bottom:12px;">Monthly Volume — Specs Processed &amp; Pipeline Value</div>
+      <div style="display:flex; align-items:flex-end; gap:4px; height:100px; padding:0 4px;">
+        ${volBars}
+      </div>
+    </div>
+
+    <div class="trend-grid">
+      <div style="background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:16px;">
+        <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; color:var(--text-muted); margin-bottom:12px;">Top Specified Products (Last 90 Days)</div>
+        <table class="trend-table">
+          <thead><tr><th>#</th><th>Product</th><th>Category</th><th>Specs</th><th>Volume</th><th>Trend</th></tr></thead>
+          <tbody>${topRows}</tbody>
+        </table>
+      </div>
+      <div>
+        <div style="background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:16px; margin-bottom:12px;">
+          <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; color:var(--green); margin-bottom:10px;">🚀 Emerging (Stock Up)</div>
+          <table class="trend-table">
+            <thead><tr><th>Product</th><th>Growth</th><th>Driver</th></tr></thead>
+            <tbody>${emergRows}</tbody>
+          </table>
+        </div>
+        <div style="background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:16px;">
+          <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; color:var(--red); margin-bottom:10px;">📉 Declining (Reduce Inventory)</div>
+          <table class="trend-table">
+            <thead><tr><th>Product</th><th>Decline</th><th>Reason</th></tr></thead>
+            <tbody>${declRows}</tbody>
+          </table>
+        </div>
+      </div>
+    </div>`;
+}
+
+// ─── FEATURE 4: MANUFACTURER PRICING ─────────────────────────────────────
+async function runMfrPricing() {
+  const select = document.getElementById('mfr-products');
+  const ids = Array.from(select.selectedOptions).map(o => o.value);
+  if (!ids.length) return alert('Select at least one product');
+
+  const el = document.getElementById('mfr-result');
+  el.innerHTML = '<div style="color:var(--text-muted); font-size:13px;">Pulling live prices from manufacturer ERPs...</div>';
+
+  const r = await fetch('/api/manufacturer-pricing', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({product_ids: ids})
+  });
+  const d = await r.json();
+
+  const rows = d.products.map(p => {
+    const dc = p.price_delta_pct > 5 ? 'var(--red)' : p.price_delta_pct < -5 ? 'var(--green)' : 'var(--amber)';
+    const statusColor = p.status === 'IN_STOCK' ? 'var(--green)' : p.status === 'LOW_STOCK' ? 'var(--amber)' : 'var(--red)';
+    return `<tr>
+      <td><div style="font-weight:600;font-size:12px">${p.product_name}</div><div style="font-size:10px;color:var(--text-muted)">${p.source}</div></td>
+      <td style="text-align:right">$${p.catalogue_price.toFixed(2)}</td>
+      <td style="text-align:right; font-weight:700">$${p.live_price.toFixed(2)}</td>
+      <td style="text-align:right; color:${dc}; font-weight:700">${p.price_delta_pct > 0 ? '+' : ''}${p.price_delta_pct}%</td>
+      <td><span style="font-size:10px; font-weight:700; color:${statusColor}">${p.status.replace('_',' ')}</span></td>
+      <td style="text-align:right; font-size:12px">${p.lead_time_days !== null ? p.lead_time_days + ' days' : 'N/A'}</td>
+    </tr>`;
+  }).join('');
+
+  const riskColor = d.summary.price_accuracy_risk > 0 ? 'var(--amber)' : 'var(--green)';
+
+  el.innerHTML = `
+    <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:16px;">
+      <div class="stat-card"><div class="stat-label">Catalogue Total</div><div class="stat-value">$${d.summary.total_catalogue_cost.toLocaleString()}</div></div>
+      <div class="stat-card ${d.summary.total_delta > 0 ? 'amber' : 'green'}">
+        <div class="stat-label">Live Total</div>
+        <div class="stat-value">$${d.summary.total_live_cost.toLocaleString()}</div>
+        <div class="stat-sub">${d.summary.total_delta > 0 ? '+' : ''}$${d.summary.total_delta.toFixed(0)} vs catalogue</div>
+      </div>
+      <div class="stat-card" style="border-color:${riskColor}">
+        <div class="stat-label">Price Risk Items</div>
+        <div class="stat-value" style="color:${riskColor}">${d.summary.price_accuracy_risk}</div>
+        <div class="stat-sub">>5% deviation from catalogue</div>
+      </div>
+    </div>
+    <div style="background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden;">
+      <table style="width:100%; border-collapse:collapse; font-size:12.5px;">
+        <thead style="background:var(--bg)">
+          <tr>
+            <th style="padding:8px 12px; text-align:left; font-size:10px; font-weight:700; text-transform:uppercase; color:var(--text-muted)">Product</th>
+            <th style="padding:8px 12px; text-align:right; font-size:10px; font-weight:700; text-transform:uppercase; color:var(--text-muted)">Catalogue $</th>
+            <th style="padding:8px 12px; text-align:right; font-size:10px; font-weight:700; text-transform:uppercase; color:var(--text-muted)">Live $</th>
+            <th style="padding:8px 12px; text-align:right; font-size:10px; font-weight:700; text-transform:uppercase; color:var(--text-muted)">Delta</th>
+            <th style="padding:8px 12px; font-size:10px; font-weight:700; text-transform:uppercase; color:var(--text-muted)">Stock</th>
+            <th style="padding:8px 12px; text-align:right; font-size:10px; font-weight:700; text-transform:uppercase; color:var(--text-muted)">Lead Time</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+    <div style="margin-top:10px; font-size:11px; color:var(--text-muted);">Last updated: ${d.products[0]?.last_updated || 'now'} · Source: Direct manufacturer ERP API</div>`;
+}
+
+// ─── FEATURE 5: BATCH PROCESSING ─────────────────────────────────────────
+async function runBatch() {
+  const el = document.getElementById('batch-result');
+  el.innerHTML = '<div style="color:var(--text-muted); font-size:13px; padding:12px 0;">Processing 4 RFQs in parallel...</div>';
+
+  const batchSpecs = [
+    {name: "Downtown Office Tower — Electrical", text: `ELECTRICAL SPEC - Office Tower\n- 200A main electrical panel 40-circuit: Qty 4\n- 2x4 LED Troffer 4000K 50W: Qty 180\n- 15A Duplex outlets: Qty 320\n- 20A GFCI outlets: Qty 48\n- 1/2 inch EMT conduit: 3200 LF\n- LED Exit Sign Battery Backup: Qty 32\n- Automatic Transfer Switch 200A: Qty 1\nMARKUP: 19%`},
+    {name: "Regional Hospital — Full MEP", text: `HOSPITAL MEP SPEC\n- 5 Ton Rooftop Unit 14 SEER: Qty 8\n- 80000 BTU Gas Furnace 96% AFUE: Qty 4\n- Smart Thermostat Wi-Fi: Qty 45\n- 80 Gallon Water Heater Gas: Qty 3\n- Elongated Toilet 1.28 GPF: Qty 28\n- Pendant Sprinkler Head K5.6: Qty 480\n- Addressable Smoke Detector: Qty 96\n- Fire Alarm Control Panel 10-Zone: Qty 2\nMARKUP: 24%`},
+    {name: "Retail Strip Mall — Plumbing", text: `PLUMBING SPEC - Retail\n- 3/4 inch Copper Type L: 420 LF\n- Elongated Toilet 1.28 GPF: Qty 8\n- Single Handle Kitchen Faucet: Qty 6\n- 40 Gallon Water Heater Electric: Qty 2\n- 3/4 inch Ball Valve Full Port: Qty 18\n- Pressure Reducing Valve 3/4 inch: Qty 2\nMARKUP: 18%`},
+    {name: "Hotel Renovation — HVAC + Low Voltage", text: `HVAC AND LOW VOLTAGE - Hotel\n- 3 Ton Split AC System 16 SEER: Qty 24\n- Air Handler 3 Ton: Qty 24\n- Energy Recovery Ventilator 200CFM: Qty 6\n- 12x12 Supply Air Grille: Qty 200\n- IP Security Camera 4MP PoE: Qty 32\n- 24-Port PoE Network Switch: Qty 4\n- Cat6 UTP Cable 1000ft: Qty 6\nMARKUP: 21%`}
+  ];
+
+  const r = await fetch('/api/batch-process', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({specs: batchSpecs})
+  });
+  const d = await r.json();
+
+  const priorityColor = p => p === 'HIGH' ? 'var(--red)' : p === 'MEDIUM' ? 'var(--amber)' : 'var(--blue)';
+  const wpColor = w => w >= 70 ? 'var(--green)' : w >= 50 ? 'var(--amber)' : 'var(--red)';
+
+  const rows = d.results.map((res, i) => `
+    <div class="batch-row" style="${i===0 ? 'background:#f0fdf4;' : ''}">
+      <div>
+        <div style="font-weight:600; font-size:13px;">${res.name}</div>
+        <div style="font-size:10px; color:var(--text-muted); margin-top:2px;">${res.categories.join(' · ')} · ${res.line_items} items · ${res.processing_ms}ms</div>
+      </div>
+      <div style="font-weight:700; color:var(--accent);">$${res.grand_total.toLocaleString()}</div>
+      <div style="font-size:12px;">${res.markup}%</div>
+      <div><span style="font-size:12px; font-weight:700; color:${wpColor(res.win_probability)}">${res.win_probability}%</span></div>
+      <div><span style="font-size:10px; font-weight:700; padding:2px 8px; border-radius:10px; background:${priorityColor(res.priority)}22; color:${priorityColor(res.priority)}">${res.priority}</span></div>
+      <div><button class="btn-secondary" style="font-size:11px; padding:4px 10px;">View →</button></div>
+    </div>`).join('');
+
+  el.innerHTML = `
+    <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:16px;">
+      <div class="stat-card"><div class="stat-label">RFQs Processed</div><div class="stat-value">${d.summary.total_specs}</div><div class="stat-sub">${d.summary.processing_time_ms}ms total</div></div>
+      <div class="stat-card green"><div class="stat-label">Total Pipeline</div><div class="stat-value" style="font-size:20px">$${(d.summary.total_pipeline_value/1000).toFixed(0)}K</div></div>
+      <div class="stat-card blue"><div class="stat-label">Avg Win Prob</div><div class="stat-value">${d.summary.avg_win_probability}%</div></div>
+      <div class="stat-card amber"><div class="stat-label">High Priority</div><div class="stat-value">${d.summary.high_priority}</div><div class="stat-sub">Quote today</div></div>
+    </div>
+    <div style="background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden;">
+      <div class="batch-row batch-header" style="border-radius:var(--radius-sm) var(--radius-sm) 0 0;">
+        <div>RFQ Name</div><div>Value</div><div>Markup</div><div>Win Prob</div><div>Priority</div><div></div>
+      </div>
+      ${rows}
+    </div>
+    <div style="margin-top:10px; font-size:11px; color:var(--text-muted);">
+      ✅ Auto-sorted by value. Estimator sees highest-value quotes first. High priority = quote today.
+    </div>`;
+}
+
+// ─── FEATURE 6: DYNAMIC PRICING ──────────────────────────────────────────
+async function runDynamicPricing() {
+  const el = document.getElementById('dp-result');
+  el.innerHTML = '<div style="color:var(--text-muted); font-size:13px;">Optimizing markup...</div>';
+
+  const r = await fetch('/api/dynamic-pricing', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({
+      customer_tier: document.getElementById('dp-tier').value,
+      project_type: document.getElementById('dp-type').value,
+      quote_value: parseFloat(document.getElementById('dp-value').value),
+      urgency: document.getElementById('dp-urgency').value,
+      base_markup: parseFloat(document.getElementById('dp-markup').value)
+    })
+  });
+  const d = await r.json();
+
+  const direction = d.optimal_markup > d.base_markup ? '▲' : d.optimal_markup < d.base_markup ? '▼' : '→';
+  const dirColor = d.optimal_markup > d.base_markup ? 'var(--green)' : d.optimal_markup < d.base_markup ? 'var(--amber)' : 'var(--text-secondary)';
+  const deltaColor = d.revenue_impact.delta >= 0 ? 'var(--green)' : 'var(--red)';
+
+  const adjRows = Object.entries(d.adjustments).map(([key, val]) => {
+    const sign = val.adj > 0 ? '+' : '';
+    const c = val.adj > 0 ? 'pos' : val.adj < 0 ? 'neg' : '';
+    return `<div class="adj-row">
+      <span style="font-size:12px; color:var(--text-secondary); flex:1">${key.replace(/_/g,' ').replace(/\b\w/g,l=>l.toUpperCase())}: <span style="color:var(--text-primary)">${val.label}</span></span>
+      <span class="adj-val ${c}">${sign}${val.adj}pp</span>
+    </div>`;
+  }).join('');
+
+  el.innerHTML = `
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+      <div style="background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:20px;">
+        <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; color:var(--text-muted); margin-bottom:12px;">Markup Recommendation</div>
+        <div style="display:flex; align-items:center; gap:16px; margin-bottom:16px;">
+          <div style="text-align:center;">
+            <div style="font-size:13px; color:var(--text-muted);">Your markup</div>
+            <div style="font-size:32px; font-weight:800; color:var(--text-secondary);">${d.base_markup}%</div>
+          </div>
+          <div style="font-size:28px; color:${dirColor};">${direction}</div>
+          <div style="text-align:center;">
+            <div style="font-size:13px; color:var(--text-muted);">Optimal markup</div>
+            <div style="font-size:32px; font-weight:800; color:${dirColor};">${d.optimal_markup}%</div>
+          </div>
+        </div>
+        <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; color:var(--text-muted); margin-bottom:8px;">Adjustments Applied</div>
+        ${adjRows}
+      </div>
+      <div>
+        <div style="background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:16px; margin-bottom:12px;">
+          <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; color:var(--text-muted); margin-bottom:10px;">Revenue Impact</div>
+          <div style="display:grid; gap:8px;">
+            <div style="display:flex; justify-content:space-between; font-size:13px; padding:6px 0; border-bottom:1px solid var(--border-light)">
+              <span style="color:var(--text-secondary)">At ${d.base_markup}% markup</span>
+              <span style="font-weight:700">$${d.revenue_impact.at_base_markup.toLocaleString()}</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:13px; padding:6px 0; border-bottom:1px solid var(--border-light)">
+              <span style="color:var(--text-secondary)">At ${d.optimal_markup}% markup</span>
+              <span style="font-weight:700; color:var(--accent)">$${d.revenue_impact.at_optimal_markup.toLocaleString()}</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:15px; font-weight:800; padding-top:6px">
+              <span>Revenue delta</span>
+              <span style="color:${deltaColor}">${d.revenue_impact.delta_label}</span>
+            </div>
+          </div>
+        </div>
+        <div style="background:var(--accent-light); border-radius:var(--radius); padding:14px 16px; color:var(--accent); font-size:13px; line-height:1.5;">
+          💡 ${d.recommendation}<br>
+          <span style="font-size:11px; opacity:0.7;">Confidence: ${d.confidence} · Based on ${[...HISTORICAL_QUOTES||[]].length || 12} historical quotes</span>
+        </div>
+      </div>
+    </div>`;
+}
+
+// ─── FEATURE 7: COMPLIANCE ────────────────────────────────────────────────
+async function runCompliance() {
+  const el = document.getElementById('comp-result');
+
+  // Use last processed extraction or fall back to sample items
+  let items = [];
+  if (lastResult?.extraction?.extracted_items?.length) {
+    items = lastResult.extraction.extracted_items;
+  } else {
+    items = [
+      {description: "2x4 LED Troffer 4000K 50W", quantity: 45},
+      {description: "3 Ton Split AC System 14 SEER", quantity: 4},
+      {description: "15A Duplex outlets", quantity: 120},
+      {description: "Emergency LED Egress Light", quantity: 12},
+      {description: "Elongated Toilet 1.28 GPF", quantity: 18},
+      {description: "Addressable Smoke Detector", quantity: 24},
+    ];
+  }
+
+  el.innerHTML = '<div style="color:var(--text-muted); font-size:13px;">Checking compliance...</div>';
+
+  const r = await fetch('/api/compliance', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({
+      items,
+      project_type: document.getElementById('comp-type').value,
+      state: document.getElementById('comp-state').value
+    })
+  });
+  const d = await r.json();
+
+  const scoreColor = d.summary.compliance_score >= 85 ? 'var(--green)' : d.summary.compliance_score >= 70 ? 'var(--amber)' : 'var(--red)';
+
+  const flags = d.flags.map(f => `
+    <div class="comp-flag">
+      <div class="comp-flag-title">⚠️ [${f.code}] ${f.item}</div>
+      <div style="font-size:12px; color:#92400e; margin-bottom:6px;">${f.issue}</div>
+      <div style="font-size:11px; background:white; border:1px solid #fde68a; border-radius:4px; padding:6px 10px; color:#78350f;">
+        ✏️ <strong>Action required:</strong> ${f.action}
+      </div>
+    </div>`).join('');
+
+  const passes = d.passes.slice(0,5).map(p => `
+    <div class="comp-pass">✅ [${p.code}] ${p.item} — ${p.status}</div>`).join('');
+
+  el.innerHTML = `
+    <div style="display:flex; align-items:center; gap:16px; background:var(--bg); border-radius:var(--radius); padding:16px; margin-bottom:16px;">
+      <div style="text-align:center; flex-shrink:0;">
+        <div style="font-size:36px; font-weight:800; color:${scoreColor}; line-height:1">${d.summary.compliance_score}</div>
+        <div style="font-size:10px; color:var(--text-muted); font-weight:600;">COMPLIANCE SCORE</div>
+      </div>
+      <div>
+        <div style="font-size:13px; font-weight:700; margin-bottom:4px;">${d.project_type} project · ${d.state} · ${d.summary.total_checked} items checked</div>
+        <div style="font-size:12px; color:var(--text-secondary);">${d.summary.flags} issues found · ${d.summary.passed} items passed</div>
+      </div>
+    </div>
+    ${d.flags.length ? `<div style="margin-bottom:12px;"><div style="font-size:11px; font-weight:700; text-transform:uppercase; color:var(--red); margin-bottom:8px;">Issues Requiring Action</div>${flags}</div>` : ''}
+    ${d.passes.length ? `<div><div style="font-size:11px; font-weight:700; text-transform:uppercase; color:var(--green); margin-bottom:8px;">Passed Checks</div>${passes}</div>` : ''}`;
+}
+
+// ─── SUBMITTALS TAB NAV ───────────────────────────────────────────────────
+function showSubmittal(name, btn) {
+  document.querySelectorAll('#panel-submittals .feat-nav-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('#panel-submittals .feature-demo').forEach(d => d.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('sub-' + name).classList.add('active');
+}
+
+// ─── 1. REVISION TRACKER ──────────────────────────────────────────────────
+async function runRevisionTracker() {
+  const el = document.getElementById('revision-result');
+  el.innerHTML = '<div style="color:var(--text-muted);font-size:13px;padding:12px 0;">Comparing revisions...</div>';
+
+  const r = await fetch('/api/submittal/revision-tracker', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({project_id: document.getElementById('rev-project').value})
+  });
+  const d = await r.json();
+
+  const diff = d.diff;
+  const rev1Status = d.rev1.status;
+  const rev2Status = d.rev2.status;
+  const r2Color = rev2Status === 'APPROVED' ? 'var(--green)' : rev2Status === 'PENDING' ? 'var(--amber)' : 'var(--red)';
+
+  const changedRows = diff.changed_items.map(c => `
+    <div style="background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); margin-bottom:12px; overflow:hidden;">
+      <div style="background:#fef2f2; padding:12px 16px; border-bottom:1px solid #fecaca;">
+        <div style="font-weight:700; font-size:13px; color:var(--red);">❌ REV 1 REJECTED — ${c.name}</div>
+        <div style="font-size:12px; color:#991b1b; margin-top:4px;">Submitted: <strong>${c.rev1_product}</strong></div>
+        <div style="font-size:12px; color:#991b1b; margin-top:4px; line-height:1.5;">Engineer comment: "${c.rejection_reason}"</div>
+      </div>
+      <div style="background:var(--green-light); padding:12px 16px;">
+        <div style="font-weight:700; font-size:13px; color:var(--green);">✅ REV 2 FIX — ${c.outcome}</div>
+        <div style="font-size:12px; color:#14532d; margin-top:4px;">Resubmitted: <strong>${c.rev2_product}</strong></div>
+        <div style="font-size:12px; color:#14532d; margin-top:4px;">Fix applied: ${c.fix_applied}</div>
+      </div>
+    </div>`).join('');
+
+  const unchangedRows = diff.unchanged_items.map(i => `
+    <div style="display:flex; align-items:center; gap:10px; padding:8px 12px; background:var(--surface); border:1px solid var(--border-light); border-radius:var(--radius-sm); margin-bottom:6px;">
+      <span style="font-size:12px; color:var(--green);">✓</span>
+      <span style="font-size:12px; font-weight:500; flex:1;">${i.name}</span>
+      <span style="font-size:11px; color:var(--text-muted);">${i.product}</span>
+      <span style="font-size:10px; font-weight:700; color:var(--green); background:var(--green-light); padding:2px 7px; border-radius:8px;">${i.status}</span>
+    </div>`).join('');
+
+  el.innerHTML = `
+    <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:20px;">
+      <div class="stat-card"><div class="stat-label">Rev 1 Status</div><div class="stat-value" style="font-size:18px; color:var(--red);">REJECTED</div><div class="stat-sub">${d.rev1.submitted}</div></div>
+      <div class="stat-card"><div class="stat-label">Rev 2 Status</div><div class="stat-value" style="font-size:18px; color:${r2Color};">${rev2Status}</div><div class="stat-sub">${d.rev2.submitted}</div></div>
+      <div class="stat-card amber"><div class="stat-label">Days Lost</div><div class="stat-value">${diff.days_to_resubmit}</div><div class="stat-sub">To revision cycle</div></div>
+      <div class="stat-card"><div class="stat-label">Cost Impact</div><div class="stat-value" style="font-size:18px; color:var(--amber);">+$${diff.total_cost_impact.toLocaleString()}</div><div class="stat-sub">From spec upgrades</div></div>
+    </div>
+
+    <div style="background:var(--bg); border-radius:var(--radius); padding:14px 16px; margin-bottom:20px; font-size:12px; color:var(--text-secondary);">
+      <strong style="color:var(--text-primary);">Project:</strong> ${d.project.name} &nbsp;·&nbsp;
+      <strong style="color:var(--text-primary);">Engineer:</strong> ${d.project.engineer}, ${d.project.engineer_firm}
+    </div>
+
+    <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; color:var(--red); margin-bottom:10px;">
+      ${diff.total_changes} Items Changed Between Rev 1 → Rev 2
+    </div>
+    ${changedRows}
+
+    <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; color:var(--green); margin-bottom:10px; margin-top:20px;">
+      ${diff.unchanged_items.length} Items Unchanged (Passed Both Revisions)
+    </div>
+    ${unchangedRows}
+
+    <div style="margin-top:16px; background:var(--purple-light); border-radius:var(--radius); padding:14px 16px; font-size:13px; color:#4c1d95; line-height:1.6;">
+      💡 <strong>What Parspec currently doesn't do:</strong> Track that this project took ${diff.days_to_resubmit} days and $${diff.total_cost_impact.toLocaleString()} extra due to ${diff.total_changes} preventable rejections.
+      If Engineer Prediction (next tab) had run before Rev 1 submission, the SEER and NEMA violations would have been caught before the engineer saw them.
+    </div>`;
+}
+
+// ─── 2. ENGINEER PREDICTION ───────────────────────────────────────────────
+async function runEngineerPrediction() {
+  const el = document.getElementById('engineer-result');
+  el.innerHTML = '<div style="color:var(--text-muted);font-size:13px;padding:12px 0;">Scoring submittal package...</div>';
+
+  // Use last result's items or defaults
+  let items = [];
+  if (lastResult?.matching?.matched?.length) {
+    items = lastResult.matching.matched.slice(0, 8).map(m => ({
+      description: m.matched_product.name,
+      brand: m.matched_product.brand,
+      category: m.matched_product.category
+    }));
+  } else {
+    items = [
+      {description: "200A Main Electrical Panel", brand: "Eaton", category: "Electrical"},
+      {description: "3 Ton Split AC 14 SEER", brand: "Carrier", category: "HVAC"},
+      {description: "Addressable Smoke Detector", brand: "Notifier", category: "Fire Protection"},
+      {description: "2x4 LED Troffer 4000K 50W", brand: "Lithonia", category: "Lighting"},
+      {description: "Elongated Toilet 1.28 GPF", brand: "Kohler", category: "Plumbing"},
+    ];
+  }
+
+  const r = await fetch('/api/submittal/engineer-prediction', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({
+      engineer_firm: document.getElementById('eng-firm').value,
+      project_type: document.getElementById('eng-type').value,
+      state: document.getElementById('eng-state').value,
+      items
+    })
+  });
+  const d = await r.json();
+
+  const scoreColor = d.package_score >= 75 ? 'var(--green)' : d.package_score >= 55 ? 'var(--amber)' : 'var(--red)';
+  const outcomeIcon = d.risk_summary.predicted_outcome === 'LIKELY APPROVED' ? '✅' :
+                      d.risk_summary.predicted_outcome === 'AT RISK' ? '⚠️' : '❌';
+
+  const itemRows = d.item_predictions.map(item => {
+    const ic = item.approval_probability >= 75 ? 'var(--green)' : item.approval_probability >= 50 ? 'var(--amber)' : 'var(--red)';
+    const riskBg = item.risk_level === 'HIGH' ? '#fef2f2' : item.risk_level === 'MEDIUM' ? '#fefce8' : 'var(--green-light)';
+    const flagsHtml = item.flags.map(f => `
+      <div style="font-size:11px; background:white; border:1px solid #fde68a; border-radius:4px; padding:5px 8px; margin-top:5px; color:#92400e; line-height:1.4;">
+        ⚠ <strong>${f.pattern}</strong> — ${f.historical_rejection_rate}% historical rejection rate<br>
+        <span style="opacity:0.8">${f.reason}</span>
+      </div>`).join('');
+
+    return `
+      <div style="background:${riskBg}; border:1px solid var(--border); border-radius:var(--radius); padding:12px 16px; margin-bottom:8px;">
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:${item.flags.length ? '8px' : '0'};">
+          <div style="font-weight:600; font-size:13px; flex:1;">${item.description}</div>
+          <div style="font-size:11px; color:var(--text-muted);">${item.brand}</div>
+          <div style="font-size:16px; font-weight:800; color:${ic}; min-width:40px; text-align:right;">${item.approval_probability}%</div>
+          <div style="font-size:10px; font-weight:700; padding:2px 8px; border-radius:10px; background:white; color:${ic}; border:1px solid ${ic};">${item.risk_level}</div>
+        </div>
+        ${flagsHtml}
+        ${item.preferred_brands.length ? `<div style="font-size:11px; color:var(--text-muted); margin-top:6px;">Preferred brands: ${item.preferred_brands.join(', ')}</div>` : ''}
+      </div>`;
+  }).join('');
+
+  el.innerHTML = `
+    <div style="display:flex; align-items:center; gap:20px; background:var(--bg); border-radius:var(--radius); padding:20px; margin-bottom:16px;">
+      <div style="text-align:center; flex-shrink:0;">
+        <div style="font-size:48px; font-weight:900; color:${scoreColor}; line-height:1;">${d.package_score}</div>
+        <div style="font-size:10px; font-weight:700; text-transform:uppercase; color:var(--text-muted);">Package Score</div>
+      </div>
+      <div style="flex:1">
+        <div style="font-size:16px; font-weight:700; margin-bottom:6px;">${outcomeIcon} ${d.risk_summary.predicted_outcome}</div>
+        <div style="font-size:12px; color:var(--text-secondary); line-height:1.6;">
+          ${d.engineer_firm} · ${d.engineer_profile.approval_rate}% historical approval rate ·
+          Avg ${d.engineer_profile.avg_revision_cycles} revision cycles ·
+          ${d.engineer_profile.total_submittals.toLocaleString()} submittals analyzed
+        </div>
+        <div style="display:flex; gap:10px; margin-top:8px;">
+          <span style="font-size:11px; background:var(--red-light); color:var(--red); padding:3px 9px; border-radius:10px; font-weight:700;">${d.risk_summary.high_risk_items} High Risk</span>
+          <span style="font-size:11px; background:var(--amber-light); color:var(--amber); padding:3px 9px; border-radius:10px; font-weight:700;">${d.risk_summary.medium_risk_items} Medium Risk</span>
+          <span style="font-size:11px; background:var(--green-light); color:var(--green); padding:3px 9px; border-radius:10px; font-weight:700;">${d.risk_summary.low_risk_items} Low Risk</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; color:var(--text-muted); margin-bottom:10px;">Item-by-Item Prediction</div>
+    ${itemRows}
+
+    <div style="margin-top:12px; background:var(--blue-light); border-radius:var(--radius); padding:14px 16px; font-size:12.5px; color:#1e40af; line-height:1.6;">
+      📋 <strong>Submission tip for ${d.engineer_firm}:</strong> ${d.submission_tips}
+    </div>`;
+}
+
+// ─── 3. WARRANTY ASSEMBLY ─────────────────────────────────────────────────
+async function runWarrantyAssembly() {
+  const el = document.getElementById('warranty-result');
+  el.innerHTML = '<div style="color:var(--text-muted);font-size:13px;padding:12px 0;">Assembling O&M package...</div>';
+
+  // Get product IDs from last result or use defaults
+  let productIds = [];
+  if (lastResult?.matching?.matched?.length) {
+    productIds = [...new Set(lastResult.matching.matched.map(m => m.matched_product.id))].slice(0, 10);
+  } else {
+    productIds = ["E001","E002","E005","H001","H002","F003","F005","P004","P006","S001"];
+  }
+
+  const r = await fetch('/api/submittal/warranty-assembly', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({
+      product_ids: productIds,
+      project_name: document.getElementById('om-project').value,
+      building_owner: document.getElementById('om-owner').value
+    })
+  });
+  const d = await r.json();
+
+  const warrantyRows = d.packages.map(p => {
+    const wColor = p.warranty_years >= 5 ? 'var(--green)' : p.warranty_years >= 3 ? 'var(--amber)' : 'var(--red)';
+    const scheduleTag = p.maintenance_schedule[0]?.frequency || 'As needed';
+    return `
+      <tr>
+        <td style="font-weight:600; font-size:12px;">${p.product_name}</td>
+        <td style="font-size:11px; color:var(--text-muted);">${p.brand}</td>
+        <td style="font-weight:700; color:${wColor}; text-align:center;">${p.warranty_years}yr</td>
+        <td style="font-size:11px; max-width:200px;">${p.warranty_type}</td>
+        <td style="font-size:11px; color:var(--text-secondary);">${p.maintenance_interval}</td>
+        <td style="font-size:11px; text-align:center;">
+          <span style="background:var(--accent-light); color:var(--accent); padding:2px 7px; border-radius:8px; font-size:10px; font-weight:700;">${scheduleTag}</span>
+        </td>
+        <td style="font-size:11px; color:var(--text-muted); text-align:center;">${p.manual_pages}pg</td>
+        <td style="font-size:11px; color:var(--text-muted);">${p.spare_parts.slice(0,2).join(', ')}</td>
+      </tr>`;
+  }).join('');
+
+  // Maintenance calendar
+  const calItems = d.packages.filter(p => p.maintenance_schedule[0]?.months?.length > 0).slice(0,6).map(p => {
+    const months = p.maintenance_schedule[0].months.map(m => ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][m-1]).join(', ');
+    return `<div style="display:flex; justify-content:space-between; align-items:center; padding:7px 0; border-bottom:1px solid var(--border-light); font-size:12px;">
+      <span style="font-weight:500;">${p.product_name}</span>
+      <span style="color:var(--accent); font-weight:600;">${months}</span>
+    </div>`;
+  }).join('');
+
+  el.innerHTML = `
+    <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:16px;">
+      <div class="stat-card green"><div class="stat-label">Products Covered</div><div class="stat-value">${d.summary.total_products}</div></div>
+      <div class="stat-card"><div class="stat-label">Manual Pages</div><div class="stat-value">${d.summary.total_manual_pages}</div><div class="stat-sub">Auto-compiled</div></div>
+      <div class="stat-card amber"><div class="stat-label">Earliest Warranty Expiry</div><div class="stat-value" style="font-size:16px;">${d.summary.earliest_warranty_expiry?.split('-')[0] || 'N/A'}</div></div>
+      <div class="stat-card blue"><div class="stat-label">Time Saved</div><div class="stat-value" style="font-size:18px;">${d.summary.estimated_assembly_time_saved}</div><div class="stat-sub">vs manual assembly</div></div>
+    </div>
+
+    <div style="background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; margin-bottom:16px;">
+      <div style="padding:12px 16px; background:var(--bg); border-bottom:1px solid var(--border); font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; color:var(--text-muted);">
+        O&M Package — ${d.project_name} · Owner: ${d.building_owner}
+      </div>
+      <div style="overflow-x:auto;">
+        <table style="width:100%; border-collapse:collapse; font-size:12.5px;">
+          <thead><tr style="background:var(--bg);">
+            <th style="padding:8px 12px; text-align:left; font-size:10px; font-weight:700; text-transform:uppercase; color:var(--text-muted);">Product</th>
+            <th style="padding:8px 12px; text-align:left; font-size:10px; font-weight:700; text-transform:uppercase; color:var(--text-muted);">Brand</th>
+            <th style="padding:8px 12px; text-align:center; font-size:10px; font-weight:700; text-transform:uppercase; color:var(--text-muted);">Warranty</th>
+            <th style="padding:8px 12px; text-align:left; font-size:10px; font-weight:700; text-transform:uppercase; color:var(--text-muted);">Type</th>
+            <th style="padding:8px 12px; text-align:left; font-size:10px; font-weight:700; text-transform:uppercase; color:var(--text-muted);">Maintenance</th>
+            <th style="padding:8px 12px; text-align:center; font-size:10px; font-weight:700; text-transform:uppercase; color:var(--text-muted);">Frequency</th>
+            <th style="padding:8px 12px; text-align:center; font-size:10px; font-weight:700; text-transform:uppercase; color:var(--text-muted);">Manual</th>
+            <th style="padding:8px 12px; text-align:left; font-size:10px; font-weight:700; text-transform:uppercase; color:var(--text-muted);">Spare Parts</th>
+          </tr></thead>
+          <tbody>${warrantyRows}</tbody>
+        </table>
+      </div>
+    </div>
+
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+      <div style="background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:16px;">
+        <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; color:var(--text-muted); margin-bottom:12px;">📅 Maintenance Calendar (Year 1)</div>
+        ${calItems || '<div style="color:var(--text-muted); font-size:12px;">No scheduled maintenance items found</div>'}
+      </div>
+      <div style="background:var(--purple-light); border-radius:var(--radius); padding:16px;">
+        <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; color:var(--purple); margin-bottom:10px;">💡 Why this is a white space</div>
+        <div style="font-size:12.5px; color:#4c1d95; line-height:1.7;">
+          Parspec automates submittal creation but stops at project approval. The O&M package — required by every building owner at project closeout — is still assembled manually, sometimes <strong>weeks after completion</strong>, from scratch.<br><br>
+          Building this at submittal time means zero extra work at closeout. The data is already there — this feature just compiles it into a deliverable the building owner actually needs.
+        </div>
+      </div>
+    </div>`;
+}
+
+// ─── 4. COLLABORATION ─────────────────────────────────────────────────────
+async function runCollaboration() {
+  const el = document.getElementById('collab-result');
+  el.innerHTML = '<div style="color:var(--text-muted);font-size:13px;padding:12px 0;">Loading project workspace...</div>';
+
+  const r = await fetch('/api/submittal/collaboration');
+  const d = await r.json();
+
+  const statusColor = s => s === 'COMPLETE' ? 'var(--green)' : s === 'IN_PROGRESS' ? 'var(--blue)' : s === 'CONFLICT' ? 'var(--red)' : 'var(--amber)';
+  const statusBg = s => s === 'COMPLETE' ? 'var(--green-light)' : s === 'IN_PROGRESS' ? 'var(--blue-light)' : s === 'CONFLICT' ? 'var(--red-light)' : 'var(--amber-light)';
+
+  const distCards = d.distributors.map(dist => {
+    const itemRows = dist.items.map(item => `
+      <div style="display:flex; align-items:center; gap:8px; padding:6px 0; border-bottom:1px solid var(--border-light); font-size:12px;">
+        <span style="flex:1; font-weight:500;">${item.name}</span>
+        <span style="color:var(--text-muted); font-size:11px;">Qty: ${item.qty}</span>
+        <span style="color:var(--text-muted); font-size:11px;">${item.voltage}</span>
+        <span style="font-size:10px; font-weight:700; padding:2px 7px; border-radius:8px; background:${statusBg(item.status)}; color:${statusColor(item.status)};">${item.status}</span>
+      </div>`).join('');
+
+    return `
+      <div style="background:var(--surface); border:1.5px solid ${dist.status === 'COMPLETE' ? '#86efac' : dist.items.some(i=>i.status==='CONFLICT') ? '#fca5a5' : 'var(--border)'}; border-radius:var(--radius); padding:16px;">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+          <div style="font-weight:700; font-size:13px; flex:1;">${dist.name}</div>
+          <span style="font-size:10px; font-weight:700; background:${statusBg(dist.status)}; color:${statusColor(dist.status)}; padding:3px 9px; border-radius:10px;">${dist.scope}</span>
+        </div>
+        <div style="font-size:11px; color:var(--text-muted); margin-bottom:10px;">Contact: ${dist.contact}</div>
+        ${itemRows}
+      </div>`;
+  }).join('');
+
+  const conflictCards = d.conflicts.map(c => {
+    const sevColor = c.severity === 'HIGH' ? 'var(--red)' : 'var(--amber)';
+    const sevBg = c.severity === 'HIGH' ? '#fef2f2' : '#fefce8';
+    const typeLabel = c.type.replace(/_/g,' ');
+    return `
+      <div style="background:${sevBg}; border:1.5px solid ${c.severity === 'HIGH' ? '#fca5a5' : '#fde68a'}; border-radius:var(--radius); padding:16px; margin-bottom:12px;" id="conflict-${c.id}">
+        <div style="display:flex; align-items:flex-start; gap:10px; margin-bottom:8px;">
+          <div style="font-size:20px;">${c.severity === 'HIGH' ? '🚨' : '⚠️'}</div>
+          <div style="flex:1">
+            <div style="font-weight:700; font-size:13px; color:${sevColor};">[${typeLabel}] ${c.description}</div>
+            <div style="font-size:11px; color:${sevColor}; margin-top:2px; opacity:0.8;">Affects: ${c.parties.join(' + ')} · Severity: ${c.severity}</div>
+          </div>
+        </div>
+        <div style="font-size:12.5px; color:var(--text-secondary); margin-bottom:10px; line-height:1.6;">${c.detail}</div>
+        <div style="background:white; border-radius:var(--radius-sm); padding:10px 12px; font-size:12px; color:var(--accent); margin-bottom:12px; line-height:1.5;">
+          💡 <strong>Suggested fix:</strong> ${c.suggested_fix}
+        </div>
+        <div style="display:flex; gap:8px;">
+          <button class="btn-primary" style="font-size:11px; padding:6px 14px;" onclick="resolveConflict('${c.id}', 'accepted')">✓ Accept Fix</button>
+          <button class="btn-secondary" style="font-size:11px; padding:6px 14px;" onclick="resolveConflict('${c.id}', 'escalated')">↑ Escalate to Engineer</button>
+          <button class="btn-secondary" style="font-size:11px; padding:6px 14px;" onclick="resolveConflict('${c.id}', 'overridden')">✗ Override</button>
+        </div>
+      </div>`;
+  }).join('');
+
+  el.innerHTML = `
+    <div style="background:var(--accent); color:white; border-radius:var(--radius); padding:16px 20px; margin-bottom:20px; display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
+      <div>
+        <div style="font-size:16px; font-weight:700;">${d.name}</div>
+        <div style="font-size:12px; opacity:0.7; margin-top:2px;">Project ID: ${d.id} · ${d.distributors.length} distributors · $${(d.value/1000000).toFixed(1)}M total value</div>
+      </div>
+      <div style="margin-left:auto; display:flex; gap:12px;">
+        <div style="text-align:center;"><div style="font-size:20px; font-weight:800;">${d.conflicts.length}</div><div style="font-size:10px; opacity:0.7;">CONFLICTS</div></div>
+        <div style="text-align:center;"><div style="font-size:20px; font-weight:800;">${d.distributors.filter(x=>x.status==='COMPLETE').length}/${d.distributors.length}</div><div style="font-size:10px; opacity:0.7;">SCOPES DONE</div></div>
+      </div>
+    </div>
+
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:20px;">
+      <div>
+        <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; color:var(--text-muted); margin-bottom:10px;">Distributor Workspaces</div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">${distCards}</div>
+      </div>
+      <div>
+        <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; color:var(--red); margin-bottom:10px;">🚨 ${d.conflicts.length} AI-Detected Conflicts</div>
+        ${conflictCards}
+      </div>
+    </div>
+
+    <div style="background:var(--purple-light); border-radius:var(--radius); padding:14px 16px; font-size:12.5px; color:#4c1d95; line-height:1.6;" id="collab-insight">
+      💡 <strong>Why this is a white space:</strong> On large projects, MEP scope is split across 3-5 distributors who each create their submittal independently.
+      The GC reconciles conflicts manually — often discovering voltage mismatches and duplicate scope only at installation.
+      This feature catches those conflicts at submittal time, saving days of rework and protecting the distributor relationship.
+    </div>`;
+}
+
+async function resolveConflict(conflictId, resolution) {
+  const r = await fetch('/api/submittal/resolve-conflict', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({conflict_id: conflictId, resolution})
+  });
+  const d = await r.json();
+  const el = document.getElementById('conflict-' + conflictId);
+  if (el) {
+    el.style.opacity = '0.4';
+    el.innerHTML += `<div style="margin-top:8px; font-size:12px; font-weight:700; color:var(--green);">✓ ${d.message}</div>`;
+  }
+  document.getElementById('collab-insight').innerHTML =
+    `✅ Conflict resolved as "${resolution}". ${d.remaining_conflicts} conflict(s) remaining. All 4 distributors notified automatically.`;
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────
+loadCatalogue();
+
+</script>
+</body>
+</html>
